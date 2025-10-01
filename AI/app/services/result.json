@@ -1,0 +1,72 @@
+{
+  "ballot_id": null,
+  "validity": "INVALID",
+  "invalid_reasons": [
+    "Đánh X vào cả hai ô Đồng ý và Không đồng ý cho cùng một ứng viên."
+  ],
+  "ballot_details": [
+    {
+      "stt": 1,
+      "name": "Nguyễn Văn A",
+      "agree": true,
+      "disagree": true,
+      "row_status": "DOUBLE_MARK"
+    },
+    {
+      "stt": 2,
+      "name": "Nguyễn Văn B",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 3,
+      "name": "Nguyễn Văn C",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 4,
+      "name": "Lê Thị Thu Thủy",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 5,
+      "name": "Lâm Bảo Minh",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 6,
+      "name": "Lê Bình Đẳng",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 7,
+      "name": "Đặng Tiến Đạt",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 8,
+      "name": "Trần Trung Nhựt",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 9,
+      "name": "Lê Thành Bách",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    }
+  ]
+}

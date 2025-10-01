@@ -1,0 +1,49 @@
+{
+  "ballot_id": null,
+  "validity": "VALID",
+  "invalid_reasons": [],
+  "ballot_details": [
+    {
+      "stt": 1,
+      "name": "Lâm Bảo Minh",
+      "selected": false,
+      "row_status": "CROSSED"
+    },
+    {
+      "stt": 2,
+      "name": "Đặng Tiến Đạt",
+      "selected": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 3,
+      "name": "Lê Thị Thu Thủy",
+      "selected": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 4,
+      "name": "Lê Bình Đẳng",
+      "selected": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 5,
+      "name": "Trần Ngọc Bảo Duy",
+      "selected": false,
+      "row_status": "CROSSED"
+    },
+    {
+      "stt": 6,
+      "name": "Lê Anh Khoa",
+      "selected": false,
+      "row_status": "CROSSED"
+    },
+    {
+      "stt": 7,
+      "name": "Trần Văn Mạnh",
+      "selected": true,
+      "row_status": "OK"
+    }
+  ]
+}
