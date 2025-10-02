@@ -1,42 +1,115 @@
+/* ========== App.css (serious theme) ========== */
+
+/* Token dùng chung toàn app */
+:root {
+  --bg: #FFFFFF;       /* nền trắng thuần */
+  --surface: #FFFFFF;  /* bề mặt card */
+  --text: #0F172A;     /* chữ chính */
+  --muted: #475569;    /* chữ phụ */
+  --border: #E5E7EB;   /* viền nhạt */
+  --accent: #0F62FE;   /* màu nhấn duy nhất */
+  --accent-fg: #FFFFFF;
+
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+/* Reset nhẹ + nền/typography mặc định */
+* { box-sizing: border-box; }
+html, body, #root {
+  height: 100%;
+}
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Container gốc của Vite template */
 #root {
-  max-width: 1280px;
+  max-width: 1280px;       /* có thể đổi sang 1160/1200 nếu bạn thích */
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  text-align: center;      /* nếu app của bạn nhiều layout trái/phải, có thể bỏ dòng này */
 }
 
+/* Logo: bỏ drop-shadow màu mè & animation demo */
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+  height: 4em;             /* gọn hơn */
+  padding: 1em;
+  transition: opacity .2s ease;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  opacity: .85;
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
+/* Bỏ hiệu ứng quay mặc định. Giữ keyframes nếu sau này cần. */
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
-
+/* Comment-out phần dưới để tránh quay logo “demo” */
+/*
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
 }
+*/
 
+/* Card mặc định (đồng bộ Home/Navbar) */
 .card {
-  padding: 2em;
+  background: var(--surface);
+  padding: 1.5em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  text-align: left;        /* card thường căn trái sẽ “nghiêm túc” hơn */
 }
 
+/* Text phụ mặc định */
 .read-the-docs {
-  color: #888;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Link chung */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Nút mặc định (phòng khi App dùng button chung) */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+button.primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+button.primary:hover {
+  background: #0043ce; /* shade của accent */
 }

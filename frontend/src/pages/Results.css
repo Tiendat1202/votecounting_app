@@ -1,0 +1,169 @@
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --text: #0F172A;
+  --muted: #475569;
+  --border: #E5E7EB;
+  --accent: #0F62FE;
+  --accent-fg: #FFFFFF;
+
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.results-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+}
+
+.results-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Actions (upload) */
+.results-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.upload-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.upload-label:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.upload-label input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.helper-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Stats cards */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+.stat-card {
+  background: #F9FAFB;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  text-align: center;
+}
+.stat-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.stat-card p {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.results-table thead th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  padding: 12px 50px;
+  border-bottom: 1px solid var(--border);
+  background: #F9FAFB;
+}
+
+.results-table tbody td {
+  padding: 12px 50px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.results-table tbody tr:hover {
+  background: #FBFBFC;
+}
+
+/* Hàng không trúng cử trong bảng */
+.results-table .not-winner td {
+  color: #6B7280;        /* chữ xám hơn */
+  background: #F3F4F6;   /* nền xám nhạt */
+}
+
+/* Legend biểu đồ */
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 12px 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.legend-swatch--elected { background: #0F62FE; }
+.legend-swatch--not { background: #94A3B8; }
+
+/* Đảm bảo text trong trục/tooltip dùng Arial đồng bộ */
+.results-container svg text {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+

@@ -1,0 +1,105 @@
+/* Navbar.css — nghiêm túc + font Arial */
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --text: #0F172A;
+  --muted: #475569;
+  --border: #E5E7EB;
+  --accent: #0F62FE;
+  --accent-fg: #FFFFFF;
+
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.navbar {
+  background-color: var(--accent);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+}
+
+.navbar .nav-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo a {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: .01em;
+  font-family: var(--font-sans);
+}
+
+.menu {
+  display: flex;
+  list-style: none;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.menu a {
+  color: var(--surface);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 10px;
+  border-radius: 6px;
+  transition: color .15s ease, background .15s ease;
+  font-family: var(--font-sans);
+}
+
+.menu a:hover {
+  color: var(--text);
+  background: #F3F4F6;
+}
+
+.auth {
+  display: flex;
+  gap: 10px;
+}
+
+/* Buttons — đồng bộ với Home */
+.btn-login,
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .15s ease;
+  font-family: var(--font-sans);
+}
+
+.btn-login:hover,
+.btn-logout:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-login {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.btn-login:hover {
+  background: #0043ce;
+  color: #fff;
+}
+
+.btn-logout {
+  /* giữ kiểu secondary mặc định */
+}

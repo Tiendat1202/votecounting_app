@@ -1,0 +1,218 @@
+:root {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --text: #0F172A;
+  --muted: #475569;
+  --border: #E5E7EB;
+  --accent: #0F62FE;
+  --accent-fg: #FFFFFF;
+  --danger: #D92D20;
+
+  --radius: 12px;               /* card “đắt” hơn chút */
+  --radius-sm: 8px;
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.create-session-container {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 48px 16px;
+  font-family: var(--font-sans);
+  color: var(--text);
+}
+
+/* ===== Card chính ===== */
+.form-box {
+  width: 100%;
+  max-width: 720px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Header card có tiêu đề + mô tả ngắn */
+.form-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.form-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+.form-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Stepper mảnh */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px 0;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.step .dot {
+  width: 8px; height: 8px; border-radius: 999px;
+  background: #CBD5E1;
+}
+.step.active { color: var(--text); }
+.step.active .dot { background: var(--accent); }
+.step-sep {
+  flex: 1;
+  height: 2px;
+  background: #EEF2F7;
+  border-radius: 999px;
+}
+
+/* Nội dung form */
+.form-body {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+/* Lưới 2 cột khi đủ rộng */
+.form-grid {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 780px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Một cột full-width */
+.col-span-2 {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  display: inline-block;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.help {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Input / Select */
+.input, .select {
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  outline: none;
+  background: var(--surface);
+}
+.input:focus, .select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.12);
+}
+
+/* Select đẹp hơn cross-browser */
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23475569' d='M5.5 7.5l4.5 5 4.5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 34px;
+}
+
+/* Danh sách ứng viên: input group */
+.candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.candidate-item .input {
+  flex: 1;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 40px; padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .18s ease;
+  text-decoration: none;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn--subtle { } /* mặc định */
+
+.btn--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  height: 30px;
+  font-size: 15px;
+}
+.btn--danger:hover { background: #b42318; border-color: #b42318; color: #fff;}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.btn--primary:hover { background: #0043ce; border-color: #0043ce; color: #fff; }
+
+.btn--block { width: 100%; }
+
+.candidate-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; /* nếu màn nhỏ thì tự xuống dòng */
+  gap: 10px;
+  margin-top: 8px;
+}
+
+
+/* Footer hành động */
+.form-footer {
+  display: grid;
+  gap: 10px;
+  padding: 0 24px 24px;
+}
+@media (min-width: 520px) {
+  .form-footer {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Ngăn cách đậm nhạt */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0 2px;
+}
