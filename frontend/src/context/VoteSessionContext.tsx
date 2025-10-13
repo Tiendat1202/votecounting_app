@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useState } from "react";
 
 export interface Session {
-  id: string;          // đồng bộ với CreateSession.tsx (string)
-  name: string;
-  type: string;        // "tin-nhiem" | "so-du"
-  candidates: string[];
+  id: string;                // ID phiên
+  name: string;              // Tên phiên
+  type: string;              // "tin-nhiem" | "so-du"
+  candidates: string[];      // Danh sách ứng viên
+  startAt?: string;          // ⏰ Thời điểm mở phiên (ISO string)
+  endAt?: string;            // ⏰ Thời điểm đóng phiên (ISO string)
 }
+
 
 interface VoteSessionContextType {
   sessions: Session[];

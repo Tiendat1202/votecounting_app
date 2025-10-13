@@ -15,7 +15,7 @@ import Results from "./pages/Results.tsx";
 //import Dashboard from "./pages/admin/Dashboard";
 import CreateSession from "./pages/admin/CreateSession";
 import Sessions from "./pages/admin/Sessions";
-//import ManageSession from "./pages/admin/ManageSession";
+import UploadVotes from "./pages/admin/UploadVotes";
 
 // Common
 //import NotFound from "./pages/NotFound";
@@ -71,7 +71,7 @@ function App() {
             <Route path="/admin/create" element={<CreateSession />} />
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/results/:id" element={<Sessions />} />
-            {/*<Route path="/admin/manage" element={<ManageSession />} />*/}
+            <Route path="/admin/upload" element={<UploadVotes />} />
 
             {/* 404 */}
             {/*<Route path="*" element={<NotFound />} />*/}

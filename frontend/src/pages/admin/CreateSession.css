@@ -82,7 +82,7 @@
 
 /* Nội dung form */
 .form-body {
-  padding: 24px;
+  padding: 24px 36px;
   display: grid;
   gap: 18px;
 }
@@ -216,3 +216,72 @@
   background: var(--border);
   margin: 6px 0 2px;
 }
+
+/* Đảm bảo datetime-local input giống input text */
+input[type="datetime-local"].input {
+  font-family: var(--font-sans);
+  line-height: 1.2;
+}
+
+/* Gộp 2 ô thời gian trên cùng 1 hàng */
+.time-row {
+  display: flex;
+  justify-content: space-between; /* ✅ tạo khoảng cách rõ giữa 2 ô */
+  gap: 36px;                      /* ✅ tăng khoảng cách */
+  align-items: flex-start;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.time-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;            /* ✅ bỏ padding 24px gây thụt vào */
+}
+
+@media (max-width: 640px) {
+  .time-row { flex-direction: column; }
+}
+
+
+.required {
+  color: #d92d20; /* đỏ cảnh báo */
+  margin-left: 2px;
+}
+
+/* Kéo-thả ứng viên (native) */
+.candidate-list .candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.candidate-list .candidate-row:active {
+  opacity: 0.9;
+}
+
+.drag-handle {
+  cursor: grab;
+  user-select: none;
+  font-weight: 700;
+  width: 18px;
+  text-align: center;
+  color: #64748b;
+}
+
+.candidate-list .candidate-row.drag-over {
+  border-color: var(--border);
+  background: #f9fafb;
+}
+
+/* giữ ô input chiếm hết chiều ngang còn lại */
+.candidate-list .candidate-row .input {
+  flex: 1;
+}
+

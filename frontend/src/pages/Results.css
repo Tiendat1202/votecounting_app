@@ -167,3 +167,46 @@
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+/* Ratio cards (tỉ lệ phiếu hợp lệ / không hợp lệ) */
+.ratio-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+
+.ratio-card {
+  background: #F9FAFB;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.ratio-card:hover {
+  transform: translateY(-2px);
+}
+
+.ratio-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.ratio-card p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ratio-card.valid p {
+  color: #0F62FE; /* xanh hợp lệ */
+}
+
+.ratio-card.invalid p {
+  color: #DC2626; /* đỏ không hợp lệ */
+}
+

@@ -28,7 +28,7 @@ export default function Navbar() {
               <Link role="menuitem" to="/admin/create">Tạo phiên</Link>
             </li>
             <li role="none">
-              <Link role="menuitem" to="/admin/manage">Quản lý</Link>
+              <Link role="menuitem" to="/admin/upload">Tải phiếu</Link>
             </li>
           </>
         )}

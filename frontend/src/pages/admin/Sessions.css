@@ -182,3 +182,40 @@
   border: none; cursor: pointer;
 }
 .back-btn:hover { background: #0043ce; }
+
+/* Badge trạng thái */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: #F9FAFB;
+  color: var(--text);
+}
+
+.status-badge.chưa-bắt-đầu {
+  background: #EFF6FF;       /* xanh nhạt */
+  border-color: #DBEAFE;
+  color: #1D4ED8;
+}
+.status-badge.đang-diễn-ra {
+  background: #ECFDF5;       /* xanh lá nhạt */
+  border-color: #D1FAE5;
+  color: #047857;
+}
+.status-badge.đã-kết-thúc {
+  background: #F3F4F6;       /* xám nhạt */
+  border-color: #E5E7EB;
+  color: #374151;
+}
+
+/* Vô hiệu hóa nút xem khi phiên chưa kết thúc */
+.view-btn.is-disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}

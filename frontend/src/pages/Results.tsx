@@ -129,6 +129,26 @@ const Results: React.FC = () => {
         </div>
       </section>
 
+            {/* 2 card tỉ lệ hợp lệ/không hợp lệ */}
+      <section className="ratio-cards" aria-label="Tỉ lệ hợp lệ">
+        <div className="ratio-card valid">
+          <h3>Tỉ lệ phiếu hợp lệ</h3>
+          <p>
+            {totalVotes > 0
+              ? ((totalValid / totalVotes) * 100).toFixed(2) + "%"
+              : "0.00%"}
+          </p>
+        </div>
+        <div className="ratio-card invalid">
+          <h3>Tỉ lệ phiếu không hợp lệ</h3>
+          <p>
+            {totalVotes > 0
+              ? ((totalInvalid / totalVotes) * 100).toFixed(2) + "%"
+              : "0.00%"}
+          </p>
+        </div>
+      </section>
+
       {/* Bảng + Biểu đồ */}
       {candidates.length > 0 && (
         <>
