@@ -113,3 +113,7 @@ button.primary {
 button.primary:hover {
   background: #0043ce; /* shade của accent */
 }
+
+.p-6 {
+  padding: 24px;
+}

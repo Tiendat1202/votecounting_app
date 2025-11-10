@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useVoteSessions } from "../../context/VoteSessionContext";
+import { createSession as apiCreateSession } from "../../api";
 import "./CreateSession.css";
 
 const CreateSession: React.FC = () => {
@@ -9,12 +9,11 @@ const CreateSession: React.FC = () => {
   const [candidates, setCandidates] = useState<string[]>([]);
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // refs cho drag & drop (native)
   const dragFromIndex = useRef<number | null>(null);
   const dragOverIndex = useRef<number | null>(null);
-
-  const { addSession } = useVoteSessions();
   const navigate = useNavigate();
 
   const handleCandidateChange = (index: number, value: string) => {
@@ -26,106 +25,82 @@ const CreateSession: React.FC = () => {
   };
 
   const addCandidate = () => setCandidates((prev) => [...prev, ""]);
-  const removeCandidate = (index: number) =>
-    setCandidates((prev) => prev.filter((_, i) => i !== index));
+  const removeCandidate = (index: number) => setCandidates((prev) => prev.filter((_, i) => i !== index));
 
   const validate = () => {
-    if (!sessionName.trim()) {
-      alert("Vui lòng nhập tên phiên kiểm phiếu!");
-      return false;
-    }
-    if (!voteType) {
-      alert("Vui lòng chọn loại phiếu!");
-      return false;
-    }
-    if (!startAt) {
-      alert("Vui lòng chọn thời điểm mở phiên!");
-      return false;
-    }
-    if (!endAt) {
-      alert("Vui lòng chọn thời điểm đóng phiên!");
-      return false;
-    }
+    if (!sessionName.trim()) return alert("Vui lòng nhập tên phiên kiểm phiếu!"), false;
+    if (!voteType) return alert("Vui lòng chọn loại phiếu!"), false;
+    if (!startAt || !endAt) return alert("Vui lòng nhập thời điểm mở/đóng phiên!"), false;
+
     const start = new Date(startAt).getTime();
     const end = new Date(endAt).getTime();
-
-    if (isNaN(start) || isNaN(end)) {
-      alert("Vui lòng nhập đầy đủ thời điểm mở và đóng phiên!");
-      return;
-    }
-
-    if (start >= end) {
-      alert("Thời điểm đóng phiên phải sau thời điểm mở phiên!");
-      return;
-    }
+    if (isNaN(start) || isNaN(end)) return alert("Thời gian không hợp lệ!"), false;
+    if (start >= end) return alert("Đóng phiên phải sau mở phiên!"), false;
 
     const validCandidates = candidates.map((c) => c.trim()).filter(Boolean);
-    if (validCandidates.length === 0) {
-      alert("Vui lòng nhập ít nhất một ứng viên!");
-      return false;
-    }
+    if (validCandidates.length === 0) return alert("Vui lòng nhập ít nhất một ứng viên!"), false;
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (!validate()) return;
 
-    addSession({
-      id: Date.now().toString(),
+    const payload = {
       name: sessionName.trim(),
       type: voteType,
       candidates: candidates.map((c) => c.trim()).filter(Boolean),
       startAt,
       endAt,
-    });
+    };
 
-    navigate("/sessions");
+    try {
+      setSubmitting(true);
+      await apiCreateSession(payload);     // tạo trên backend
+      navigate("/admin/sessions");         // quay về danh sách để fetch mới
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err?.message || "Tạo phiên thất bại. Vui lòng thử lại.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // Dán nguyên danh sách → tách dòng
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const text = e.clipboardData.getData("text");
-    const lines = text
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l !== "");
+    const lines = text.split("\n").map((l) => l.trim()).filter((l) => l !== "");
     if (lines.length > 0) {
       e.preventDefault();
       setCandidates(lines);
     }
   };
 
-  // ---- Kéo-thả native ----
   const onDragStart = (index: number) => (e: React.DragEvent<HTMLLIElement>) => {
     dragFromIndex.current = index;
     e.dataTransfer.effectAllowed = "move";
-    // Firefox cần setData để drag hoạt động
     e.dataTransfer.setData("text/plain", String(index));
   };
-
   const onDragOver = (index: number) => (e: React.DragEvent<HTMLLIElement>) => {
-    e.preventDefault(); // cho phép drop
+    e.preventDefault();
     dragOverIndex.current = index;
   };
-
-  const onDrop =
-    (index: number) => (e: React.DragEvent<HTMLLIElement | HTMLUListElement>) => {
-      e.preventDefault();
-      const from = dragFromIndex.current;
-      const to = dragOverIndex.current ?? index;
-      if (from === null || to === null || from === to) {
-        dragFromIndex.current = dragOverIndex.current = null;
-        return;
-      }
-      setCandidates((prev) => {
-        const next = [...prev];
-        const [moved] = next.splice(from, 1);
-        next.splice(to, 0, moved);
-        return next;
-      });
+  const onDrop = (index: number) => (e: React.DragEvent<HTMLLIElement | HTMLUListElement>) => {
+    e.preventDefault();
+    const from = dragFromIndex.current;
+    const to = dragOverIndex.current ?? index;
+    if (from === null || to === null || from === to) {
       dragFromIndex.current = dragOverIndex.current = null;
-    };
+      return;
+    }
+    setCandidates((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    dragFromIndex.current = dragOverIndex.current = null;
+  };
 
   return (
     <div className="create-session-container">
@@ -136,6 +111,12 @@ const CreateSession: React.FC = () => {
             Dán danh sách ứng viên (mỗi người 1 dòng), sau đó có thể chỉnh sửa, xóa, kéo thả để sắp xếp.
           </p>
         </div>
+
+        {errorMsg && (
+          <div className="alert-error" role="alert" style={{ marginBottom: 12 }}>
+            {errorMsg}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="form-body" noValidate>
           <div className="form-grid">
@@ -156,14 +137,13 @@ const CreateSession: React.FC = () => {
               <label>
                 Loại phiếu <span className="required">*</span>
               </label>
-              <select
-                className="select"
-                value={voteType}
-                onChange={(e) => setVoteType(e.target.value)}
-              >
-                <option value="tin-nhiem">Phiếu tín nhiệm</option>
-                <option value="so-du">Phiếu có số dư</option>
-              </select>
+              <div className="select-wrapper">
+                <select className="select" value={voteType} onChange={(e) => setVoteType(e.target.value)}>
+                  <option value="tin-nhiem">Phiếu tín nhiệm</option>
+                  <option value="so-du">Phiếu có số dư</option>
+                </select>
+                <span className="select-arrow">▼</span>
+              </div>
             </div>
 
             <div className="form-group col-span-2 time-row">
@@ -171,56 +151,32 @@ const CreateSession: React.FC = () => {
                 <label>
                   Thời điểm mở phiên <span className="required">*</span>
                 </label>
-                <input
-                  className="input"
-                  type="datetime-local"
-                  value={startAt}
-                  onChange={(e) => setStartAt(e.target.value)}
-                />
+                <input className="input" type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
               </div>
 
               <div className="time-field">
                 <label>
                   Thời điểm đóng phiên <span className="required">*</span>
                 </label>
-                <input
-                  className="input"
-                  type="datetime-local"
-                  value={endAt}
-                  onChange={(e) => setEndAt(e.target.value)}
-                  min={startAt || undefined}
-                />
+                <input className="input" type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} min={startAt || undefined} />
               </div>
             </div>
 
             <div className="form-group col-span-2">
               <label>
                 Danh sách ứng viên <span className="required">*</span>{" "}
-                <span style={{ color: "#64748b", fontWeight: 500 }}>
-                  (đang có {candidates.filter(Boolean).length})
-                </span>
+                <span style={{ color: "#64748b", fontWeight: 500 }}>(đang có {candidates.filter(Boolean).length})</span>
               </label>
 
-              {/* Ô dán danh sách */}
-              <textarea
-                className="input"
-                placeholder="Dán danh sách ứng viên, mỗi người 1 dòng"
-                rows={5}
-                onPaste={handlePaste}
-              ></textarea>
+              <textarea className="input" placeholder="Dán danh sách ứng viên, mỗi người 1 dòng" rows={5} onPaste={handlePaste}></textarea>
 
               <div className="candidate-actions" style={{ marginTop: 10 }}>
                 <button
                   type="button"
                   onClick={() => {
-                    const textarea = document.querySelector(
-                      "textarea"
-                    ) as HTMLTextAreaElement;
+                    const textarea = document.querySelector("textarea") as HTMLTextAreaElement;
                     if (textarea?.value) {
-                      const lines = textarea.value
-                        .split("\n")
-                        .map((l) => l.trim())
-                        .filter((l) => l !== "");
+                      const lines = textarea.value.split("\n").map((l) => l.trim()).filter((l) => l !== "");
                       setCandidates(lines);
                       textarea.value = "";
                     }
@@ -231,13 +187,7 @@ const CreateSession: React.FC = () => {
                 </button>
               </div>
 
-              {/* Danh sách có thể chỉnh sửa + kéo thả */}
-              <ul
-                className="candidate-list"
-                onDrop={onDrop(-1)}
-                onDragOver={(e) => e.preventDefault()}
-                style={{ listStyle: "none", padding: 0, marginTop: 12 }}
-              >
+              <ul className="candidate-list" onDrop={onDrop(-1)} onDragOver={(e) => e.preventDefault()}>
                 {candidates.map((candidate, index) => (
                   <li
                     key={index}
@@ -248,20 +198,12 @@ const CreateSession: React.FC = () => {
                     onDrop={onDrop(index)}
                     aria-label={`Ứng viên ${index + 1}`}
                   >
-                    <span className="drag-handle" aria-hidden>⋮⋮</span>
-                    <input
-                      className="input"
-                      type="text"
-                      value={candidate}
-                      onChange={(e) =>
-                        handleCandidateChange(index, e.target.value)
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeCandidate(index)}
-                      className="btn btn--danger"
-                    >
+                    <span className="candidate-index">{index + 1}.</span>
+                    <span className="drag-handle" aria-hidden>
+                      ⋮⋮
+                    </span>
+                    <input className="input" type="text" value={candidate} onChange={(e) => handleCandidateChange(index, e.target.value)} />
+                    <button type="button" onClick={() => removeCandidate(index)} className="btn btn--danger">
                       Xóa
                     </button>
                   </li>
@@ -280,11 +222,11 @@ const CreateSession: React.FC = () => {
           </div>
 
           <div className="form-footer">
-            <Link to="/sessions" className="btn btn--subtle">
+            <Link to="/admin/sessions" className="btn btn--subtle">
               Quay lại danh sách phiên
             </Link>
-            <button type="submit" className="btn btn--primary btn--block">
-              Tạo phiên
+            <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
+              {submitting ? "Đang tạo..." : "Tạo phiên"}
             </button>
           </div>
         </form>

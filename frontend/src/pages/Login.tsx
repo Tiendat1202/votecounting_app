@@ -1,27 +1,47 @@
+import React, { useState } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
-export default function Login() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+const Login: React.FC = () => {
+  const { user, loading, login } = useAuth();
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("123456");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const nav = useNavigate();
 
-  const handleLogin = (role: "user" | "admin") => {
-    login(role);
-    navigate("/"); // sau khi login quay về Home
+  if (!loading && user) {
+    return <Navigate to={user.role === "admin" ? "/admin/dashboard" : "/"} replace />;
+  }
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr(null);
+    try {
+      setBusy(true);
+      await login(email, password);
+      nav("/admin/dashboard", { replace: true });
+    } catch (e: any) {
+      setErr(e?.message || "Đăng nhập thất bại");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="login-container">
-      <h1 className="login-title">Đăng nhập hệ thống</h1>
-      <div className="login-buttons">
-        <button onClick={() => handleLogin("user")} className="btn btn-user">
-          Login as User
-        </button>
-        <button onClick={() => handleLogin("admin")} className="btn btn-admin">
-          Login as Admin
-        </button>
-      </div>
+      <h1>Đăng nhập</h1>
+      {err && <div className="alert-error">{err}</div>}
+      <form onSubmit={onSubmit} className="login-form">
+        <label>Email</label>
+        <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" />
+        <label>Mật khẩu</label>
+        <input value={password} onChange={(e)=>setPassword(e.target.value)} type="password" />
+        <button type="submit" disabled={busy}>{busy ? "Đang đăng nhập..." : "Đăng nhập"}</button>
+      </form>
     </div>
   );
-}
+};
+
+export default Login;

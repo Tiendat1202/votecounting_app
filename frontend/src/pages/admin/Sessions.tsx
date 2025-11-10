@@ -1,190 +1,199 @@
-import React from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { useVoteSessions } from "../../context/VoteSessionContext";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Sessions.css";
+import { getSessions } from "../../api";
 
-type SessionStatus = "Chưa bắt đầu" | "Đang diễn ra" | "Đã kết thúc" | "—";
+type Session = {
+  id: string;
+  name: string;
+  type: string;
+  candidates: string[];
+  startAt?: string;
+  endAt?: string;
+};
+
+type SessionStatus = "Chưa diễn ra" | "Đang diễn ra" | "Đã kết thúc" | "—";
 
 function getSessionStatus(startAt?: string, endAt?: string): SessionStatus {
-  if (!startAt || !endAt) return "—"; // thiếu dữ liệu thời gian
+  if (!startAt || !endAt) return "—";
   const now = Date.now();
-  const start = new Date(startAt).getTime();
-  const end = new Date(endAt).getTime();
-  if (Number.isNaN(start) || Number.isNaN(end)) return "—";
-  if (now < start) return "Chưa bắt đầu";
-  if (now >= start && now <= end) return "Đang diễn ra";
+  const s = new Date(startAt).getTime();
+  const e = new Date(endAt).getTime();
+  if (Number.isNaN(s) || Number.isNaN(e)) return "—";
+  if (now < s) return "Chưa diễn ra";
+  if (now >= s && now <= e) return "Đang diễn ra";
   return "Đã kết thúc";
 }
 
-function formatDT(dt?: string) {
-  if (!dt) return "—";
-  const t = new Date(dt);
-  if (isNaN(t.getTime())) return "—";
-  return t.toLocaleString("vi-VN");
+function statusToClass(status: SessionStatus) {
+  switch (status) {
+    case "Chưa diễn ra":
+      return "chưa-bắt-đầu";
+    case "Đang diễn ra":
+      return "đang-diễn-ra";
+    case "Đã kết thúc":
+      return "đã-kết-thúc";
+    default:
+      return "";
+  }
 }
 
 const Sessions: React.FC = () => {
-  const { id } = useParams<{ id?: string }>();
-  const navigate = useNavigate();
-  const { sessions, removeSession, getSessionById } = useVoteSessions();
+  const [items, setItems] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-  // ========== CHI TIẾT PHIÊN ==========
-  if (id) {
-    const session = getSessionById(id);
-
-    if (!session) {
-      return (
-        <div className="background-rd-container">
-          <div className="result-details-container" role="alert">
-            <h2>Phiên không tồn tại</h2>
-            <p>Không tìm thấy dữ liệu cho phiên đã yêu cầu.</p>
-            <button className="back-btn" onClick={() => navigate("/sessions")}>
-              Quay lại danh sách
-            </button>
-          </div>
-        </div>
-      );
+  const fetchData = async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const data: Session[] = await getSessions();
+      setItems(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      console.error(e);
+      setErr(e?.message || "Không tải được danh sách phiên.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const loaiPhieu = session.type === "tin-nhiem" ? "Tín nhiệm" : "Có số dư";
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-    return (
-      <div className="background-rd-container">
-        <article className="result-details-container" aria-labelledby="session-title">
-          <h1 id="session-title">Chi tiết phiên: {session.name}</h1>
-
-          <p><strong>Loại phiếu:</strong> {loaiPhieu}</p>
-          <p>
-            <strong>Mở:</strong> {formatDT(session.startAt)} &nbsp;|&nbsp;{" "}
-            <strong>Đóng:</strong> {formatDT(session.endAt)}
-          </p>
-          <p>
-            <strong>Trạng thái:</strong>{" "}
-            <span
-              className={`status-badge ${getSessionStatus(session.startAt, session.endAt)
-                .replaceAll(" ", "-")
-                .toLowerCase()}`}
-            >
-              {getSessionStatus(session.startAt, session.endAt)}
-            </span>
-          </p>
-
-          <h3>Danh sách ứng viên</h3>
-          {session.candidates.length === 0 ? (
-            <p>Không có ứng viên.</p>
-          ) : (
-            <ul className="candidate-list" aria-label="Danh sách ứng viên">
-              {session.candidates
-                .slice()
-                .sort((a, b) => a.localeCompare(b, "vi", { sensitivity: "base" }))
-                .map((c, idx) => (
-                  <li key={idx}>{c}</li>
-                ))}
-            </ul>
-          )}
-
-          <button className="back-btn" onClick={() => navigate("/sessions")}>
-            Quay lại danh sách
-          </button>
-        </article>
-      </div>
-    );
-  }
-
-  // ========== DANH SÁCH PHIÊN ==========
-
-  // 🔽 Sắp xếp danh sách phiên
-  const sortedSessions = sessions
-    .slice()
-    .sort((a, b) => {
-      const startA = new Date(a.startAt ?? "").getTime();
-      const startB = new Date(b.startAt ?? "").getTime();
-      // Ưu tiên trạng thái: Đang diễn ra > Chưa bắt đầu > Đã kết thúc
-      const statusOrder = { "Đang diễn ra": 1, "Chưa bắt đầu": 2, "Đã kết thúc": 3, "—": 4 };
-      const statusA = getSessionStatus(a.startAt, a.endAt);
-      const statusB = getSessionStatus(b.startAt, b.endAt);
-      if (statusA !== statusB) return statusOrder[statusA] - statusOrder[statusB];
-      return startA - startB;
-    });
+  const stats = useMemo(() => {
+    let running = 0,
+      finished = 0,
+      upcoming = 0;
+    for (const s of items) {
+      const st = getSessionStatus(s.startAt, s.endAt);
+      if (st === "Đang diễn ra") running++;
+      else if (st === "Đã kết thúc") finished++;
+      else if (st === "Chưa diễn ra") upcoming++;
+    }
+    return { total: items.length, running, finished, upcoming };
+  }, [items]);
 
   return (
     <div className="sessions-container">
       <div className="header">
-        <h1>Danh sách các phiên kiểm phiếu</h1>
-        <Link to="/admin/create" className="create-btn">
-          Tạo phiên mới
-        </Link>
+        <h1>Danh sách phiên kiểm phiếu</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link to="/admin/create-session" className="create-btn">
+            + Tạo phiên
+          </Link>
+          <button onClick={fetchData} className="create-btn" style={{ background: "#475569" }}>
+            {loading ? "Đang tải..." : "Làm mới"}
+          </button>
+        </div>
       </div>
 
-      {sessions.length === 0 ? (
-        <p>Chưa có phiên nào được tạo.</p>
-      ) : (
-        <table className="sessions-table">
-          <thead>
+      {err && (
+        <div
+          className="alert-error"
+          role="alert"
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "#FEE2E2",
+            color: "#991B1B",
+            border: "1px solid #FCA5A5",
+          }}
+        >
+          {err}
+        </div>
+      )}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 12,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 8 }}>
+          <div style={{ color: "var(--muted)", fontSize: 12 }}>Tổng số phiên</div>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{stats.total}</div>
+        </div>
+        <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 8 }}>
+          <div style={{ color: "var(--muted)", fontSize: 12 }}>Đang diễn ra</div>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{stats.running}</div>
+        </div>
+        <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 8 }}>
+          <div style={{ color: "var(--muted)", fontSize: 12 }}>Đã kết thúc</div>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{stats.finished}</div>
+        </div>
+        <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 8 }}>
+          <div style={{ color: "var(--muted)", fontSize: 12 }}>Chưa diễn ra</div>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{stats.upcoming}</div>
+        </div>
+      </div>
+
+      <table className="sessions-table" aria-label="Danh sách phiên">
+        <thead>
+          <tr>
+            <th style={{ width: 56 }}>#</th>
+            <th>Tên phiên</th>
+            <th>Loại</th>
+            <th>Ứng viên</th>
+            <th>Bắt đầu</th>
+            <th>Kết thúc</th>
+            <th>Trạng thái</th>
+            <th style={{ width: 220 }}>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {!loading && items.length === 0 ? (
             <tr>
-              <th>#</th>
-              <th>Tên phiên</th>
-              <th>Loại phiếu</th>
-              <th>Mở</th>
-              <th>Đóng</th>
-              <th>Trạng thái</th>
-              <th>Số ứng viên</th>
-              <th>Thao tác</th>
+              <td colSpan={8} style={{ padding: 20, color: "var(--muted)" }}>
+                Chưa có phiên nào.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {sortedSessions.map((session, index) => {
-              const status = getSessionStatus(session.startAt, session.endAt);
-              const canView = status === "Đã kết thúc";
+          ) : (
+            items.map((s, idx) => {
+              const status = getSessionStatus(s.startAt, s.endAt);
+              const badgeClass = statusToClass(status);
+              const finished = status === "Đã kết thúc";
               return (
-                <tr key={session.id}>
-                  <td>{index + 1}</td>
-                  <td>{session.name}</td>
+                <tr key={s.id}>
+                  <td>{idx + 1}</td>
+                  <td style={{ textAlign: "left" }}>{s.name}</td>
+                  <td>{s.type}</td>
+                  <td>{s.candidates?.length ?? 0}</td>
+                  <td>{s.startAt ? new Date(s.startAt).toLocaleString("vi-VN") : "—"}</td>
+                  <td>{s.endAt ? new Date(s.endAt).toLocaleString("vi-VN") : "—"}</td>
                   <td>
-                    {session.type === "tin-nhiem" ? "Tín nhiệm" : "Có số dư"}
+                    <span className={`status-badge ${badgeClass}`}>{status}</span>
                   </td>
-                  <td>{formatDT(session.startAt)}</td>
-                  <td>{formatDT(session.endAt)}</td>
                   <td>
-                    <span
-                      className={`status-badge ${status
-                        .replaceAll(" ", "-")
-                        .toLowerCase()}`}
-                      title={status}
-                    >
-                      {status}
-                    </span>
-                  </td>
-                  <td>{session.candidates.length}</td>
-                  <td>
-                    <Link
-                      to={`/results/${session.id}`}
-                      className={`view-btn ${canView ? "" : "is-disabled"}`}
-                      aria-disabled={!canView}
-                      title={
-                        canView
-                          ? "Xem kết quả"
-                          : "Kết thúc phiên để xem kết quả"
-                      }
-                      onClick={(e) => {
-                        if (!canView) e.preventDefault();
-                      }}
-                    >
-                      Xem
-                    </Link>
-                    <button
-                      onClick={() => removeSession(session.id)}
-                      className="delete-btn"
-                    >
-                      Xóa
-                    </button>
+                    {finished ? (
+                      <Link className="view-btn" to={`/admin/results/${s.id}`}>
+                        Kết quả
+                      </Link>
+                    ) : (
+                      <span className="view-btn is-disabled" title="Chỉ xem khi phiên đã kết thúc">
+                        Kết quả
+                      </span>
+                    )}
+
+                    {status === "Đang diễn ra" ? (
+                      <Link className="view-btn" to={`/admin/upload/${s.id}`}>
+                        Upload
+                      </Link>
+                    ) : (
+                      <span className="view-btn is-disabled" title="Chỉ upload khi phiên đang diễn ra">
+                        Upload
+                      </span>
+                    )}
                   </td>
                 </tr>
               );
-            })}
-          </tbody>
-        </table>
-      )}
+            })
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };

@@ -1,32 +1,56 @@
-import { createContext, useContext, useState } from "react";
-import type { ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { getMe, login as apiLogin, logoutApi } from "../api";
 
+type User = { id: string; email: string; role: "admin" | "user" };
+type AuthCtx = {
+  user: User | null;
+  role: User["role"] | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+};
 
-type Role = "user" | "admin" | null;
+const Ctx = createContext<AuthCtx>({
+  user: null,
+  role: null,
+  loading: true,
+  login: async () => {},
+  logout: async () => {},
+});
 
-interface AuthContextType {
-  role: Role;
-  login: (newRole: Role) => void;
-  logout: () => void;
-}
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+  // giữ phiên nếu có cookie
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await getMe();
+        setUser(me);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>(null);
+  const login = async (email: string, password: string) => {
+    const me = await apiLogin(email, password);
+    setUser(me);
+  };
 
-  const login = (newRole: Role) => setRole(newRole);
-  const logout = () => setRole(null);
+  const logout = async () => {
+    await logoutApi();
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ role, login, logout }}>
+    <Ctx.Provider value={{ user, role: user?.role ?? null, loading, login, logout }}>
       {children}
-    </AuthContext.Provider>
+    </Ctx.Provider>
   );
-}
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside AuthProvider");
-  return context;
-}
+export const useAuth = () => useContext(Ctx);

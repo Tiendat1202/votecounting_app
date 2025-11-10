@@ -12,6 +12,8 @@ import {
   Cell,
 } from "recharts";
 import "./Results.css";
+import ResultAssistant from "../components/ResultAssistant";
+
 
 interface Candidate {
   name: string;
@@ -244,6 +246,20 @@ const Results: React.FC = () => {
           </ResponsiveContainer>
         </>
       )}
+      {/* Trợ lý giải thích kết quả */}
+      <ResultAssistant
+        summary={{
+          totalVotes,
+          totalValid,
+          totalInvalid,
+          candidates: candidates.map((c) => ({
+            name: c.name,
+            votes: c.votesReceived,
+            isElected: c.isElected,
+          })),
+        }}
+      />
+
     </div>
   );
 };

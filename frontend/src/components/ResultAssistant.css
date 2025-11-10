@@ -1,0 +1,125 @@
+.assistant-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.assistant-header {
+  background: #0f62fe;
+  color: white;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.assistant-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+.msg {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.msg.user {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.msg.user .bubble {
+  background: #0f62fe;
+  color: white;
+  border-bottom-right-radius: 2px;
+}
+
+.msg.assistant .bubble {
+  background: #f3f4f6;
+  color: #111827;
+  border-bottom-left-radius: 2px;
+}
+
+.assistant-input {
+  display: flex;
+  border-top: 1px solid #e5e7eb;
+}
+
+.assistant-input input {
+  flex: 1;
+  border: none;
+  padding: 10px;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.assistant-input button {
+  background: #0f62fe;
+  border: none;
+  color: white;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.assistant-input button:hover {
+  background: #0043ce;
+}
+
+/* Nút nổi mở chat */
+.assistant-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #0f62fe;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  z-index: 999;
+}
+
+.assistant-toggle:hover {
+  background: #0043ce;
+  transform: scale(1.05);
+}
+
+/* Nút đóng trong header */
+.assistant-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.assistant-close:hover {
+  opacity: 0.8;
+}
+

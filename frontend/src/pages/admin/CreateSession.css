@@ -285,3 +285,43 @@ input[type="datetime-local"].input {
   flex: 1;
 }
 
+/* ========== Dropdown với mũi tam giác ========== */
+.select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.select-wrapper .select {
+  width: 100%;
+  appearance: none;
+  padding-right: 34px; /* chừa chỗ cho mũi tên */
+}
+
+.select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ========== Số thứ tự ứng viên ========== */
+.candidate-index {
+  width: 24px;
+  text-align: right;
+  margin-right: 8px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ========== Hiệu ứng hover ứng viên ========== */
+.candidate-row {
+  transition: background 0.15s ease;
+}
+
+.candidate-row:hover {
+  background: #f9fafb;
+}

@@ -1,80 +1,60 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 // Context
-import { AuthProvider } from "./context/AuthContext.tsx";
+import { AuthProvider } from "./context/AuthContext";
 
 // Navbar
 import Navbar from "./components/Navbar";
 
-// User pages
+// Public pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import Results from "./pages/Results.tsx";
+import Results from "./pages/Results";
 
 // Admin pages
-//import Dashboard from "./pages/admin/Dashboard";
-import CreateSession from "./pages/admin/CreateSession";
+import Dashboard from "./pages/admin/Dashboard";
 import Sessions from "./pages/admin/Sessions";
+import CreateSession from "./pages/admin/CreateSession";
 import UploadVotes from "./pages/admin/UploadVotes";
 
-// Common
-//import NotFound from "./pages/NotFound";
-<nav
-  style={{
-    background: "#1e3a8a", // xanh navy
-    padding: "12px 20px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    color: "white",
-    fontWeight: "bold",
-  }}
->
-  <div>VoteCounting</div>
-  <div style={{ display: "flex", gap: "16px" }}>
-    <a href="/" style={{ color: "white", textDecoration: "none" }}>Home</a>
-    <a href="/results" style={{ color: "white", textDecoration: "none" }}>Kết quả</a>
-    <a href="/dashboard" style={{ color: "white", textDecoration: "none" }}>Dashboard</a>
-    <a href="/create-session" style={{ color: "white", textDecoration: "none" }}>Tạo phiên</a>
-    <a href="/manage" style={{ color: "white", textDecoration: "none" }}>Quản lý</a>
-    <a href="/stats" style={{ color: "white", textDecoration: "none" }}>Thống kê</a>
-  </div>
-  <button
-    style={{
-      background: "#ef4444",
-      border: "none",
-      color: "white",
-      padding: "6px 12px",
-      borderRadius: "6px",
-      cursor: "pointer",
-    }}
-  >
-    Logout
-  </button>
-</nav>
+// --------- Inline guard: RequireAuth (bảo vệ trang admin) ----------
+import { useAuth } from "./context/AuthContext";
+function RequireAuth({ role }: { role?: "admin" | "user" }) {
+  const { user, loading } = useAuth();
+  if (loading) return null; // hoặc spinner
+  if (!user) return <Navigate to="/login" replace />;
+  if (role && user.role !== role) return <Navigate to="/" replace />;
+  return <Outlet />;
+}
 
+// --------- 404 đơn giản ----------
+const NotFound = () => <div style={{ padding: 24 }}>Trang không tồn tại.</div>;
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Navbar />
+
         <div className="p-6">
           <Routes>
-            {/* User routes */}
+            {/* PUBLIC */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/results" element={<Results />} />
 
-            {/* Admin routes */}
-            {/*<Route path="/admin" element={<Dashboard />} />*/}
-            <Route path="/admin/create" element={<CreateSession />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/results/:id" element={<Sessions />} />
-            <Route path="/admin/upload" element={<UploadVotes />} />
+            {/* ADMIN (bảo vệ bằng RequireAuth) */}
+            <Route element={<RequireAuth role="admin" />}>
+              <Route path="/admin/dashboard" element={<Dashboard />} />
+              <Route path="/admin/sessions" element={<Sessions />} />
+              <Route path="/admin/create-session" element={<CreateSession />} />
+              <Route path="/admin/upload" element={<UploadVotes />} />
+              <Route path="/admin/upload/:id" element={<UploadVotes />} />
+              <Route path="/admin/results/:id" element={<Results />} />
+            </Route>
 
             {/* 404 */}
-            {/*<Route path="*" element={<NotFound />} />*/}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </Router>

@@ -1,9 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useVoteSessions } from "../../context/VoteSessionContext";
+import { useParams } from "react-router-dom";
+import {
+  uploadVoteFiles,
+  getUploadedFiles,
+  deleteUploadedFile,
+  deleteAllUploadedFiles,
+  getSessions,
+} from "../../api";
 import "./UploadVotes.css";
 
-type SessionStatus = "Chưa bắt đầu" | "Đang diễn ra" | "Đã kết thúc" | "—";
+type Session = {
+  id: string;
+  name: string;
+  type: string;
+  candidates: string[];
+  startAt?: string;
+  endAt?: string;
+};
 
+type SessionStatus = "Chưa bắt đầu" | "Đang diễn ra" | "Đã kết thúc" | "—";
 function getSessionStatus(startAt?: string, endAt?: string): SessionStatus {
   if (!startAt || !endAt) return "—";
   const now = Date.now();
@@ -15,99 +30,133 @@ function getSessionStatus(startAt?: string, endAt?: string): SessionStatus {
   return "Đã kết thúc";
 }
 
-type UploadedImage = {
+type UIImage = {
   id: string;
   name: string;
-  size: number;
-  src: string;
-  addedAt: number;
+  size?: number;
+  addedAt?: number;
+  url: string;
 };
 
-const storageKey = (sessionId: string) => `vc_images_${sessionId}`;
-function loadImages(sessionId: string): UploadedImage[] {
-  try {
-    const raw = localStorage.getItem(storageKey(sessionId));
-    return raw ? (JSON.parse(raw) as UploadedImage[]) : [];
-  } catch {
-    return [];
-  }
-}
-function saveImages(sessionId: string, images: UploadedImage[]) {
-  localStorage.setItem(storageKey(sessionId), JSON.stringify(images));
-}
-
 const nf = new Intl.NumberFormat("vi-VN");
+const BACKEND_BASE = "http://localhost:5050";
 
 const UploadVotes: React.FC = () => {
-  const { sessions } = useVoteSessions();
+  const { id: paramId } = useParams<{ id?: string }>();
+  const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
-  const [images, setImages] = useState<UploadedImage[]>([]);
+  const [images, setImages] = useState<UIImage[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Lấy danh sách phiên từ backend
+  useEffect(() => {
+    (async () => {
+      try {
+        const data: Session[] = await getSessions();
+        setAllSessions(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Không tải được danh sách phiên:", e);
+        setAllSessions([]);
+      }
+    })();
+  }, []);
 
   const runningSessions = useMemo(
-    () =>
-      sessions.filter(
-        (s) => getSessionStatus(s.startAt, s.endAt) === "Đang diễn ra"
-      ),
-    [sessions]
+    () => allSessions.filter((s) => getSessionStatus(s.startAt, s.endAt) === "Đang diễn ra"),
+    [allSessions]
   );
 
+  // Nếu có param :id và có phiên khớp → chọn sẵn
+  useEffect(() => {
+    if (paramId && allSessions.find((s) => s.id === paramId)) {
+      setSelectedSessionId(paramId);
+    }
+  }, [paramId, allSessions]);
+
+  // Auto-chọn phiên đang diễn ra đầu tiên nếu chưa chọn
   useEffect(() => {
     if (!selectedSessionId && runningSessions.length > 0) {
       setSelectedSessionId(runningSessions[0].id);
     }
   }, [runningSessions, selectedSessionId]);
 
+  // Tải danh sách ảnh khi đổi phiên
   useEffect(() => {
     if (!selectedSessionId) return;
-    setImages(loadImages(selectedSessionId));
+    (async () => {
+      try {
+        const list: string[] = await getUploadedFiles(selectedSessionId);
+        const ui = list.map((fn) => ({
+          id: fn,
+          name: fn,
+          url: `${BACKEND_BASE}/uploads/${fn}`,
+        }));
+        setImages(ui);
+      } catch (e) {
+        console.error("Lỗi tải danh sách ảnh:", e);
+        setImages([]);
+      }
+    })();
   }, [selectedSessionId]);
 
   const handleFiles = async (fileList: FileList | null) => {
     if (!fileList || !selectedSessionId) return;
-    const accepted = Array.from(fileList).filter((f) =>
-      /image\/(png|jpe?g|webp)/i.test(f.type)
-    );
+    const accepted = Array.from(fileList).filter((f) => /image\/(png|jpe?g|webp)/i.test(f.type));
+    if (accepted.length === 0) return;
 
-    const toDataURL = (file: File) =>
-      new Promise<UploadedImage>((resolve, reject) => {
-        const fr = new FileReader();
-        fr.onload = () =>
-          resolve({
-            id: crypto.randomUUID(),
-            name: file.name,
-            size: file.size,
-            src: String(fr.result),
-            addedAt: Date.now(),
-          });
-        fr.onerror = () => reject(new Error("Read file error"));
-        fr.readAsDataURL(file);
-      });
-
-    const newImages = await Promise.all(accepted.map(toDataURL));
-    setImages((prev) => {
-      const next = [...prev, ...newImages];
-      saveImages(selectedSessionId, next);
-      return next;
-    });
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    try {
+      setBusy(true);
+      const result = await uploadVoteFiles(selectedSessionId, accepted);
+      if (result?.files?.length) {
+        const appended: UIImage[] = result.files.map((f: any) => ({
+          id: f.filename,
+          name: f.originalname || f.filename,
+          size: f.size,
+          addedAt: Date.now(),
+          url: `${BACKEND_BASE}/uploads/${f.filename}`,
+        }));
+        setImages((prev) => [...appended, ...prev]);
+      } else {
+        const list: string[] = await getUploadedFiles(selectedSessionId);
+        const ui = list.map((fn) => ({
+          id: fn,
+          name: fn,
+          url: `${BACKEND_BASE}/uploads/${fn}`,
+        }));
+        setImages(ui);
+      }
+    } catch (err: any) {
+      alert(`Upload thất bại: ${err?.message || "Không rõ lỗi"}`);
+      console.error(err);
+    } finally {
+      setBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (filename: string) => {
     if (!selectedSessionId) return;
-    setImages((prev) => {
-      const next = prev.filter((img) => img.id !== id);
-      saveImages(selectedSessionId, next);
-      return next;
-    });
+    try {
+      await deleteUploadedFile(selectedSessionId, filename);
+      setImages((prev) => prev.filter((img) => img.id !== filename));
+    } catch (e) {
+      alert("Lỗi khi xóa ảnh.");
+      console.error(e);
+    }
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (!selectedSessionId) return;
-    if (!confirm("Xóa tất cả ảnh của phiên này?")) return;
-    setImages([]);
-    saveImages(selectedSessionId, []);
+    if (!confirm("Bạn có chắc muốn xóa TẤT CẢ ảnh của phiên này?")) return;
+    try {
+      await deleteAllUploadedFiles(selectedSessionId);
+      setImages([]);
+    } catch (e) {
+      alert("Lỗi khi xóa tất cả ảnh.");
+      console.error(e);
+    }
   };
 
   const onDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
@@ -116,14 +165,12 @@ const UploadVotes: React.FC = () => {
     handleFiles(e.dataTransfer.files);
   };
 
-  const selectedSession =
-    sessions.find((s) => s.id === selectedSessionId) || null;
+  const selectedSession = allSessions.find((s) => s.id === selectedSessionId) || null;
 
   return (
     <div className="upload-container">
       <h1 className="upload-title">Tải ảnh lá phiếu (AI)</h1>
 
-      {/* Chọn phiên */}
       <section className="upload-section">
         <label htmlFor="session-select" className="label-strong">
           Chọn phiên đang diễn ra <span className="required">*</span>
@@ -131,8 +178,7 @@ const UploadVotes: React.FC = () => {
 
         {runningSessions.length === 0 ? (
           <p className="muted-text">
-            Hiện không có phiên nào đang diễn ra. Vui lòng tạo phiên hoặc chờ
-            đến thời gian mở phiên.
+            Hiện không có phiên nào đang diễn ra. Vui lòng tạo phiên hoặc chờ đến thời gian mở phiên.
           </p>
         ) : (
           <select
@@ -143,9 +189,7 @@ const UploadVotes: React.FC = () => {
           >
             {runningSessions.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name} — Mở:{" "}
-                {s.startAt ? new Date(s.startAt).toLocaleString("vi-VN") : "—"}{" "}
-                | Đóng:{" "}
+                {s.name} — Mở: {s.startAt ? new Date(s.startAt).toLocaleString("vi-VN") : "—"} | Đóng:{" "}
                 {s.endAt ? new Date(s.endAt).toLocaleString("vi-VN") : "—"}
               </option>
             ))}
@@ -153,7 +197,6 @@ const UploadVotes: React.FC = () => {
         )}
       </section>
 
-      {/* Upload */}
       <section
         className={`upload-dropzone ${!selectedSessionId ? "disabled" : ""}`}
         onDragOver={(e) => {
@@ -163,13 +206,9 @@ const UploadVotes: React.FC = () => {
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
       >
-        <div
-          className={`drop-area ${dragOver ? "active" : ""}`}
-          onClick={() => fileInputRef.current?.click()}
-        >
+        <div className={`drop-area ${dragOver ? "active" : ""}`} onClick={() => !busy && fileInputRef.current?.click()}>
           <p className="drop-text">
-            Kéo & thả ảnh vào đây hoặc{" "}
-            <span className="file-link">chọn nhiều ảnh</span>
+            Kéo & thả ảnh vào đây hoặc <span className="file-link">chọn nhiều ảnh</span>
           </p>
           <input
             ref={fileInputRef}
@@ -178,14 +217,15 @@ const UploadVotes: React.FC = () => {
             accept="image/png,image/jpeg,image/webp"
             multiple
             onChange={(e) => handleFiles(e.target.files)}
+            disabled={busy}
             style={{ display: "none" }}
           />
-          <p className="hint-text">Hỗ trợ: PNG, JPG, JPEG, WEBP</p>
+          <p className="hint-text">Hỗ trợ: PNG, JPG, JPEG, WEBP {busy ? " • Đang upload..." : ""}</p>
         </div>
 
         {images.length > 0 && (
           <div className="upload-actions">
-            <button onClick={() => fileInputRef.current?.click()} className="btn">
+            <button onClick={() => fileInputRef.current?.click()} className="btn" disabled={busy}>
               Thêm ảnh
             </button>
             <button onClick={handleClearAll} className="btn btn--danger">
@@ -195,43 +235,31 @@ const UploadVotes: React.FC = () => {
         )}
       </section>
 
-      {/* Thư viện ảnh */}
       <section className="gallery-section">
         <div className="gallery-header">
-          <h2>
-            Ảnh đã tải {selectedSession ? `— ${selectedSession.name}` : ""}
-          </h2>
-          <span className="muted-text">
-            Tổng: <strong>{nf.format(images.length)}</strong> ảnh
-          </span>
+          <h2>Ảnh đã tải {selectedSession ? `— ${selectedSession.name}` : ""}</h2>
         </div>
 
         {images.length === 0 ? (
           <p className="muted-text">Chưa có ảnh nào cho phiên này.</p>
         ) : (
           <div className="gallery-grid">
-            {images
-              .slice()
-              .sort((a, b) => b.addedAt - a.addedAt)
-              .map((img) => (
-                <figure key={img.id} className="gallery-item">
-                  <img src={img.src} alt={img.name} />
-                  <figcaption>
-                    <div className="image-name" title={img.name}>
-                      {img.name}
-                    </div>
-                    <div className="image-size">
-                      {nf.format(Math.round(img.size / 1024))} KB
-                    </div>
-                    <button
-                      onClick={() => handleDelete(img.id)}
-                      className="btn btn--danger"
-                    >
-                      Xóa
-                    </button>
-                  </figcaption>
-                </figure>
-              ))}
+            {images.map((img) => (
+              <figure key={img.id} className="gallery-item">
+                <img src={img.url} alt={img.name} />
+                <figcaption>
+                  <div className="image-name" title={img.name}>
+                    {img.name}
+                  </div>
+                  <div className="image-size">
+                    {typeof img.size === "number" ? `${nf.format(Math.round(img.size / 1024))} KB` : "—"}
+                  </div>
+                  <button onClick={() => handleDelete(img.id)} className="btn btn--danger">
+                    Xóa
+                  </button>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         )}
       </section>

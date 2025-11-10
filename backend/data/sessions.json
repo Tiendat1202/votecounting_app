@@ -1,0 +1,73 @@
+[
+  {
+    "id": "1762710104279",
+    "name": "đại hội",
+    "type": "tin-nhiem",
+    "candidates": [
+      "le binh dang"
+    ],
+    "startAt": "2025-11-10T00:41",
+    "endAt": "2025-11-11T00:41"
+  },
+  {
+    "id": "1762718444419",
+    "name": "Đại hội lần thứ 9",
+    "type": "tin-nhiem",
+    "candidates": [
+      "Phạm Nhật Vượng",
+      "Nguyễn Thị Phương Thảo",
+      "Trần Bá Dương",
+      "Hồ Hùng Anh",
+      "Nguyễn Đăng Quang",
+      "Trần Đình Long",
+      "Bùi Thành Nhơn",
+      "Ngô Chí Dũng",
+      "Đỗ Quang Hiển",
+      "Lê Phước Vũ",
+      "Đoàn Nguyên Đức",
+      "Trịnh Văn Quyết",
+      "Vũ Văn Tiền",
+      "Đỗ Minh Phú",
+      "Mai Kiều Liên",
+      "Võ Quốc Thắng",
+      "Nguyễn Quốc Khánh",
+      "Lê Viết Lam",
+      "Phạm Thu Hương",
+      "Nguyễn Hoàng Yến"
+    ],
+    "startAt": "2025-11-10T02:59",
+    "endAt": "2025-11-12T02:59"
+  },
+  {
+    "id": "1762721736289",
+    "name": "đại hội nhà 13",
+    "type": "tin-nhiem",
+    "candidates": [
+      "dang dang dang",
+      "Nè he"
+    ],
+    "startAt": "2025-11-11T03:55",
+    "endAt": "2025-11-13T03:55"
+  },
+  {
+    "id": "1762721797425",
+    "name": "đại hội 1",
+    "type": "tin-nhiem",
+    "candidates": [
+      "oẻ",
+      "ụa"
+    ],
+    "startAt": "2025-11-09T03:56",
+    "endAt": "2025-11-09T03:57"
+  },
+  {
+    "id": "1762722094504",
+    "name": "2025",
+    "type": "tin-nhiem",
+    "candidates": [
+      "mệt"
+    ],
+    "startAt": "2025-11-10T04:01",
+    "endAt": "2025-11-10T04:03"
+  }
+]
