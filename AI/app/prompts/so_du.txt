@@ -13,8 +13,9 @@ Nhiệm vụ:
    - Phiếu không hợp lệ nếu:
      • Bầu nhiều hơn N ứng viên.
      • Có tên ngoài danh sách.
-     • Sử dụng nhiều loại mực, có vết tẩy xoá, ký tên hoặc ghi thêm.
-     • Có ký hiệu khả nghi trên phiếu.
+     • Bầu vượt số lượng quy định.
+     • Phiếu không bầu cho bất kỳ ai (tên tất cả người trên phiếu)
+     • Có vết tẩy xoá, ký tên hoặc ghi thêm thông tin khác ngoài thông tin được in trên phiếu.
 5. Nếu phiếu không hợp lệ, không tính cho bất kỳ ứng viên nào.
 
 Yêu cầu:

@@ -1,8 +1,8 @@
 {
-  "ballot_id": null,
+  "ballot_id": "01",
   "validity": "INVALID",
   "invalid_reasons": [
-    "Phiếu bầu không hợp lệ vì không có bất kỳ ứng viên nào được chọn (tất cả đều bị gạch tên)."
+    "Phiếu bầu không hợp lệ vì có gạch tên tất cả người trên phiếu"
   ],
   "ballot_details": [
     {

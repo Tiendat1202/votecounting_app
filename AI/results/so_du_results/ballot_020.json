@@ -2,7 +2,7 @@
   "ballot_id": null,
   "validity": "INVALID",
   "invalid_reasons": [
-    "Phiếu bầu không hợp lệ vì không có bất kỳ ứng viên nào được chọn (tất cả đều bị gạch tên)."
+    "OVER_SEATS(N=2, selected=3)"
   ],
   "ballot_details": [
     {
@@ -14,8 +14,8 @@
     {
       "stt": 2,
       "name": "Nguyễn Ngọc Chiến Công",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 3,
@@ -32,14 +32,15 @@
     {
       "stt": 5,
       "name": "Trần Văn Mạnh",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 6,
       "name": "Tạ Quang Thái",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     }
-  ]
+  ],
+  "seats": 2
 }

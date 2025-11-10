@@ -1,51 +1,44 @@
 {
   "ballot_id": null,
-  "validity": "INVALID",
-  "invalid_reasons": [
-    "Bầu nhiều hơn N ứng viên."
-  ],
+  "validity": "VALID",
+  "invalid_reasons": [],
   "ballot_details": [
     {
       "stt": 1,
-      "name": "Lâm Bảo Minh",
+      "name": "Cao Gia Bảo",
       "selected": false,
       "row_status": "CROSSED"
     },
     {
       "stt": 2,
-      "name": "Đặng Tiến Đạt",
+      "name": "Nguyễn Ngọc Chiến Công",
       "selected": true,
       "row_status": "OK"
     },
     {
       "stt": 3,
-      "name": "Lê Thị Thu Thủy",
-      "selected": true,
-      "row_status": "OK"
-    },
-    {
-      "stt": 4,
-      "name": "Lê Bình Đẳng",
-      "selected": true,
-      "row_status": "OK"
-    },
-    {
-      "stt": 5,
       "name": "Trần Ngọc Bảo Duy",
       "selected": false,
       "row_status": "CROSSED"
     },
     {
-      "stt": 6,
-      "name": "Lê Anh Khoa",
+      "stt": 4,
+      "name": "Đỗ Trần Đăng Khôi",
       "selected": false,
       "row_status": "CROSSED"
     },
     {
-      "stt": 7,
+      "stt": 5,
       "name": "Trần Văn Mạnh",
       "selected": true,
       "row_status": "OK"
+    },
+    {
+      "stt": 6,
+      "name": "Tạ Quang Thái",
+      "selected": false,
+      "row_status": "OK"
     }
-  ]
+  ],
+  "seats": 2
 }

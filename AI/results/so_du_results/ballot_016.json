@@ -1,21 +1,21 @@
 {
-  "ballot_id": null,
+  "ballot_id": "XYZ_2025_2027",
   "validity": "INVALID",
   "invalid_reasons": [
-    "Phiếu bầu không hợp lệ vì không có bất kỳ ứng viên nào được chọn (tất cả đều bị gạch tên)."
+    "OVER_SEATS(N=2, selected=4)"
   ],
   "ballot_details": [
     {
       "stt": 1,
       "name": "Cao Gia Bảo",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 2,
       "name": "Nguyễn Ngọc Chiến Công",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 3,
@@ -26,8 +26,8 @@
     {
       "stt": 4,
       "name": "Đỗ Trần Đăng Khôi",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 5,
@@ -38,8 +38,9 @@
     {
       "stt": 6,
       "name": "Tạ Quang Thái",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     }
-  ]
+  ],
+  "seats": 2
 }

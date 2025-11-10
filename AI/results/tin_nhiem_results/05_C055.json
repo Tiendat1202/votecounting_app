@@ -1,67 +1,81 @@
 {
-  "ballot_id": null,
+  "ballot_id": "05_C055",
   "validity": "VALID",
   "invalid_reasons": [],
   "ballot_details": [
     {
       "stt": 1,
-      "name": "Nguyễn Văn A",
+      "name": "Trần Khánh An",
       "agree": true,
       "disagree": false,
       "row_status": "OK"
     },
     {
       "stt": 2,
-      "name": "Nguyễn Văn B",
+      "name": "Nguyễn Thế Anh",
       "agree": true,
       "disagree": false,
       "row_status": "OK"
     },
     {
       "stt": 3,
-      "name": "Nguyễn Văn C",
+      "name": "Trần Ngọc Bảo Duy",
       "agree": true,
       "disagree": false,
       "row_status": "OK"
     },
     {
       "stt": 4,
-      "name": "Lê Thị Thu Thủy",
-      "agree": false,
-      "disagree": true,
+      "name": "Đặng Tiến Đạt",
+      "agree": true,
+      "disagree": false,
       "row_status": "OK"
     },
     {
       "stt": 5,
-      "name": "Lâm Bảo Minh",
-      "agree": false,
-      "disagree": true,
-      "row_status": "OK"
-    },
-    {
-      "stt": 6,
       "name": "Lê Bình Đẳng",
       "agree": true,
       "disagree": false,
       "row_status": "OK"
     },
     {
+      "stt": 6,
+      "name": "Châu Gia Huy",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
       "stt": 7,
-      "name": "Đặng Tiến Đạt",
-      "agree": false,
-      "disagree": true,
+      "name": "Lê Anh Khoa",
+      "agree": true,
+      "disagree": false,
       "row_status": "OK"
     },
     {
       "stt": 8,
-      "name": "Trần Trung Nhựt",
+      "name": "Lâm Bảo Minh",
       "agree": true,
       "disagree": false,
       "row_status": "OK"
     },
     {
       "stt": 9,
-      "name": "Lê Thành Bách",
+      "name": "Nguyễn Ngô Uyên Nhi",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 10,
+      "name": "Trần Trung Nhựt",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 11,
+      "name": "Lê Thị Thu Thủy",
       "agree": true,
       "disagree": false,
       "row_status": "OK"

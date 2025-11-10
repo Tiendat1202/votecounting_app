@@ -1,15 +1,16 @@
 {
-  "ballot_id": null,
+  "ballot_id": "SO_DU",
   "validity": "INVALID",
   "invalid_reasons": [
-    "Phiếu bầu không hợp lệ vì không có bất kỳ ứng viên nào được chọn (tất cả đều bị gạch tên)."
+    "OVER_SEATS(N=1, selected=3)",
+    "bầu > N"
   ],
   "ballot_details": [
     {
       "stt": 1,
       "name": "Cao Gia Bảo",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 2,
@@ -20,14 +21,14 @@
     {
       "stt": 3,
       "name": "Trần Ngọc Bảo Duy",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 4,
       "name": "Đỗ Trần Đăng Khôi",
-      "selected": false,
-      "row_status": "CROSSED"
+      "selected": true,
+      "row_status": "OK"
     },
     {
       "stt": 5,
@@ -41,5 +42,6 @@
       "selected": false,
       "row_status": "CROSSED"
     }
-  ]
+  ],
+  "seats": 1
 }
