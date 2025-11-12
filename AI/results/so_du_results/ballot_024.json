@@ -1,0 +1,47 @@
+{
+  "ballot_id": "SO_DU",
+  "validity": "INVALID",
+  "invalid_reasons": [
+    "OVER_SEATS(N=1, selected=3)",
+    "bầu > N"
+  ],
+  "ballot_details": [
+    {
+      "stt": 1,
+      "name": "Cao Gia Bảo",
+      "selected": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 2,
+      "name": "Nguyễn Ngọc Chiến Công",
+      "selected": false,
+      "row_status": "CROSSED"
+    },
+    {
+      "stt": 3,
+      "name": "Trần Ngọc Bảo Duy",
+      "selected": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 4,
+      "name": "Đỗ Trần Đăng Khôi",
+      "selected": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 5,
+      "name": "Trần Văn Mạnh",
+      "selected": false,
+      "row_status": "CROSSED"
+    },
+    {
+      "stt": 6,
+      "name": "Tạ Quang Thái",
+      "selected": false,
+      "row_status": "CROSSED"
+    }
+  ],
+  "seats": 1
+}

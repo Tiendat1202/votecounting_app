@@ -1,0 +1,86 @@
+{
+  "ballot_id": "03_2D97",
+  "validity": "INVALID",
+  "invalid_reasons": [
+    "Có thêm tên ngoài danh sách được in."
+  ],
+  "ballot_details": [
+    {
+      "stt": 1,
+      "name": "Trần Khánh An",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 2,
+      "name": "Nguyễn Thế Anh",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 3,
+      "name": "Trần Ngọc Bảo Duy",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 4,
+      "name": "Đặng Tiến Đạt",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 5,
+      "name": "Lê Bình Đẳng",
+      "agree": false,
+      "disagree": true,
+      "row_status": "OK"
+    },
+    {
+      "stt": 6,
+      "name": "Châu Gia Huy",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 7,
+      "name": "Lê Anh Khoa",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 8,
+      "name": "Lâm Bảo Minh",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 9,
+      "name": "Nguyễn Ngô Uyên Nhi",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 10,
+      "name": "Trần Trung Nhựt",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    },
+    {
+      "stt": 11,
+      "name": "Lê Thị Thu Thủy",
+      "agree": true,
+      "disagree": false,
+      "row_status": "OK"
+    }
+  ]
+}
