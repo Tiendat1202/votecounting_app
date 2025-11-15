@@ -6,7 +6,7 @@ type AuthCtx = {
   user: User | null;
   role: User["role"] | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -36,10 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const me = await apiLogin(email, password);
-    setUser(me);
-  };
+  const login = async (email: string, password: string, remember = false) => {
+  const me = await apiLogin(email, password, remember);
+  setUser(me);
+};
 
   const logout = async () => {
     await logoutApi();

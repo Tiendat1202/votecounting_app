@@ -103,3 +103,45 @@
 .btn-logout {
   /* giữ kiểu secondary mặc định */
 }
+
+/* === ĐỒNG BỘ NÚT LOGIN / LOGOUT === */
+.btn-login,
+.btn-logout {
+  font-size: 15px !important;      /* đồng bộ cỡ chữ */
+  font-weight: 600;
+  //padding: 10px 16px !important;   /* padding giống các nút khác */
+  border-radius: 8px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.05s ease;
+  border: none;
+}
+
+/* Nút Login — xanh dương */
+.btn-login {
+  background: #2563eb;
+  color: white;
+}
+.btn-login:hover {
+  background: #1d4ed8;
+}
+.btn-login:active {
+  transform: scale(0.97);
+}
+
+/* Nút Logout — đỏ */
+.btn-logout {
+  background: #ef4444;
+  color: white;
+}
+.btn-logout:hover {
+  background: #dc2626;
+}
+.btn-logout:active {
+  transform: scale(0.97);
+}

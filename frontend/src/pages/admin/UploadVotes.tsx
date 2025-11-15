@@ -43,14 +43,55 @@ const BACKEND_BASE = "http://localhost:5050";
 
 const UploadVotes: React.FC = () => {
   const { id: paramId } = useParams<{ id?: string }>();
+
+  // sessions
   const [allSessions, setAllSessions] = useState<Session[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
+
+  // images
   const [images, setImages] = useState<UIImage[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Lấy danh sách phiên từ backend
+  // lightbox viewer
+  const [viewer, setViewer] = useState<{ open: boolean; index: number }>({
+    open: false,
+    index: 0,
+  });
+
+  // ---- CHẶN ĐIỀU HƯỚNG TOÀN TRANG KHI KÉO/THẢ NGOÀI DROPZONE ----
+  useEffect(() => {
+    const onDragOver = (e: DragEvent) => {
+      e.preventDefault(); // tránh UI đổi icon cấm + cho phép drop
+    };
+    const onDrop = (e: DragEvent) => {
+      // Nếu người dùng thả ngoài vùng xử lý của chúng ta, ngăn điều hướng file
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", onDragOver);
+    window.addEventListener("drop", onDrop);
+    return () => {
+      window.removeEventListener("dragover", onDragOver);
+      window.removeEventListener("drop", onDrop);
+    };
+  }, []);
+
+  // ---- LIGHTBOX: phím tắt ESC/←/→ ----
+  useEffect(() => {
+    if (!viewer.open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewer((v) => ({ ...v, open: false }));
+      if (e.key === "ArrowLeft")
+        setViewer((v) => ({ ...v, index: (v.index - 1 + images.length) % images.length }));
+      if (e.key === "ArrowRight")
+        setViewer((v) => ({ ...v, index: (v.index + 1) % images.length }));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewer.open, images.length]);
+
+  // fetch sessions
   useEffect(() => {
     (async () => {
       try {
@@ -68,21 +109,21 @@ const UploadVotes: React.FC = () => {
     [allSessions]
   );
 
-  // Nếu có param :id và có phiên khớp → chọn sẵn
+  // chọn theo param :id nếu hợp lệ
   useEffect(() => {
     if (paramId && allSessions.find((s) => s.id === paramId)) {
       setSelectedSessionId(paramId);
     }
   }, [paramId, allSessions]);
 
-  // Auto-chọn phiên đang diễn ra đầu tiên nếu chưa chọn
+  // auto-chọn phiên đang diễn ra đầu tiên
   useEffect(() => {
     if (!selectedSessionId && runningSessions.length > 0) {
       setSelectedSessionId(runningSessions[0].id);
     }
   }, [runningSessions, selectedSessionId]);
 
-  // Tải danh sách ảnh khi đổi phiên
+  // tải danh sách ảnh khi đổi phiên
   useEffect(() => {
     if (!selectedSessionId) return;
     (async () => {
@@ -101,6 +142,7 @@ const UploadVotes: React.FC = () => {
     })();
   }, [selectedSessionId]);
 
+  // upload nhiều ảnh
   const handleFiles = async (fileList: FileList | null) => {
     if (!fileList || !selectedSessionId) return;
     const accepted = Array.from(fileList).filter((f) => /image\/(png|jpe?g|webp)/i.test(f.type));
@@ -136,6 +178,7 @@ const UploadVotes: React.FC = () => {
     }
   };
 
+  // xóa 1 ảnh
   const handleDelete = async (filename: string) => {
     if (!selectedSessionId) return;
     try {
@@ -147,6 +190,7 @@ const UploadVotes: React.FC = () => {
     }
   };
 
+  // xóa tất cả ảnh
   const handleClearAll = async () => {
     if (!selectedSessionId) return;
     if (!confirm("Bạn có chắc muốn xóa TẤT CẢ ảnh của phiên này?")) return;
@@ -159,6 +203,7 @@ const UploadVotes: React.FC = () => {
     }
   };
 
+  // drop trong vùng dropzone
   const onDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
     setDragOver(false);
@@ -167,10 +212,15 @@ const UploadVotes: React.FC = () => {
 
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId) || null;
 
+  // open/close viewer
+  const openViewer = (index: number) => setViewer({ open: true, index });
+  const closeViewer = () => setViewer((v) => ({ ...v, open: false }));
+
   return (
     <div className="upload-container">
       <h1 className="upload-title">Tải ảnh lá phiếu (AI)</h1>
 
+      {/* Chọn phiên */}
       <section className="upload-section">
         <label htmlFor="session-select" className="label-strong">
           Chọn phiên đang diễn ra <span className="required">*</span>
@@ -197,6 +247,7 @@ const UploadVotes: React.FC = () => {
         )}
       </section>
 
+      {/* Upload */}
       <section
         className={`upload-dropzone ${!selectedSessionId ? "disabled" : ""}`}
         onDragOver={(e) => {
@@ -235,6 +286,7 @@ const UploadVotes: React.FC = () => {
         )}
       </section>
 
+      {/* Thư viện ảnh */}
       <section className="gallery-section">
         <div className="gallery-header">
           <h2>Ảnh đã tải {selectedSession ? `— ${selectedSession.name}` : ""}</h2>
@@ -244,9 +296,14 @@ const UploadVotes: React.FC = () => {
           <p className="muted-text">Chưa có ảnh nào cho phiên này.</p>
         ) : (
           <div className="gallery-grid">
-            {images.map((img) => (
+            {images.map((img, idx) => (
               <figure key={img.id} className="gallery-item">
-                <img src={img.url} alt={img.name} />
+                <img
+                  src={img.url}
+                  alt={img.name}
+                  onClick={() => openViewer(idx)} // mở full ảnh
+                  style={{ cursor: "zoom-in" }}
+                />
                 <figcaption>
                   <div className="image-name" title={img.name}>
                     {img.name}
@@ -263,6 +320,34 @@ const UploadVotes: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* LIGHTBOX VIEWER */}
+      {viewer.open && images[viewer.index] && (
+        <div className="lightbox" onClick={closeViewer} role="dialog" aria-modal="true">
+          <div className="lightbox__backdrop" />
+          <div className="lightbox__content" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox__close" onClick={closeViewer} aria-label="Đóng">×</button>
+            <button
+              className="lightbox__nav lightbox__nav--left"
+              onClick={() => setViewer((v) => ({ ...v, index: (v.index - 1 + images.length) % images.length }))}
+              aria-label="Ảnh trước"
+            >
+              ‹
+            </button>
+            <img className="lightbox__img" src={images[viewer.index].url} alt={images[viewer.index].name} />
+            <button
+              className="lightbox__nav lightbox__nav--right"
+              onClick={() => setViewer((v) => ({ ...v, index: (v.index + 1) % images.length }))}
+              aria-label="Ảnh kế"
+            >
+              ›
+            </button>
+            <div className="lightbox__caption">
+              {images[viewer.index].name} ({viewer.index + 1}/{images.length})
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

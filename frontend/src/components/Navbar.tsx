@@ -73,11 +73,11 @@ export default function Navbar() {
               className="btn-logout"
               aria-label="Đăng xuất"
             >
-              Logout
+              Đăng xuất
             </button>
           ) : (
             <Link to="/login" className="btn-login" aria-label="Đăng nhập">
-              Login
+              Đăng nhập
             </Link>
           )}
         </div>

@@ -45,23 +45,26 @@ function authMiddleware(req, res, next) {
 
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, remember } = req.body || {};
   const user = users.find((u) => u.email === email);
   if (!user) return res.status(401).json({ message: "Sai email hoặc mật khẩu" });
 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ message: "Sai email hoặc mật khẩu" });
 
-  const token = signToken({ id: user.id, email: user.email, role: user.role });
+   const token = signToken({ id: user.id, email: user.email, role: user.role });
 
-  // Set cookie httpOnly
-  res.cookie(COOKIE_NAME, token, {
+  const cookieOpts = {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // true nếu chạy HTTPS
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+    secure: false,         // true nếu HTTPS
+    // KHÔNG đặt maxAge => cookie phiên, tắt trình duyệt sẽ mất
+  };
+  if (remember) {
+    cookieOpts.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 ngày nếu chọn "nhớ"
+  }
 
+  res.cookie(COOKIE_NAME, token, cookieOpts);
   res.json({ id: user.id, email: user.email, role: user.role });
 });
 

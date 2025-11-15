@@ -1,5 +1,5 @@
+// src/pages/admin/Dashboard.tsx
 import React, { useEffect, useState } from "react";
-import { useVoteSessions } from "../../context/VoteSessionContext";
 import "./Dashboard.css";
 import {
   PieChart,
@@ -16,6 +16,16 @@ import {
   Line,
   Legend,
 } from "recharts";
+import { getSessions } from "../../api";
+
+type Session = {
+  id: string;
+  name: string;
+  type: string;
+  candidates: { id?: string; name: string }[] | string[];
+  startAt?: string;
+  endAt?: string;
+};
 
 type UploadCount = { sessionId: string; count: number };
 
@@ -25,7 +35,7 @@ const COLORS = {
   upcoming: "#F59E0B",  // vàng: chưa diễn ra
 };
 
-// —— Helpers: đọc số ảnh đã upload ——
+/* ==== Helpers: đếm ảnh đã upload từ phía client (giữ tương thích) ==== */
 // 1) localStorage (các bản cũ)
 function readLocalUploadCounts(): UploadCount[] {
   const out: UploadCount[] = [];
@@ -82,10 +92,49 @@ async function readIndexedDBUploadCounts(): Promise<UploadCount[]> {
   }
 }
 
-const Dashboard: React.FC = () => {
-  const { sessions } = useVoteSessions();
-  const [uploads, setUploads] = useState<UploadCount[]>([]);
+function isRunning(s?: string, e?: string) {
+  if (!s || !e) return false;
+  const now = Date.now();
+  const ss = new Date(s).getTime();
+  const ee = new Date(e).getTime();
+  return !Number.isNaN(ss) && !Number.isNaN(ee) && now >= ss && now <= ee;
+}
+function isFinished(e?: string) {
+  if (!e) return false;
+  const ee = new Date(e).getTime();
+  return !Number.isNaN(ee) && Date.now() > ee;
+}
+function isUpcoming(s?: string) {
+  if (!s) return false;
+  const ss = new Date(s).getTime();
+  return !Number.isNaN(ss) && Date.now() < ss;
+}
 
+const Dashboard: React.FC = () => {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [uploads, setUploads] = useState<UploadCount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+  // Lấy phiên từ backend
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setErr(null);
+        const data = (await getSessions()) as Session[];
+        setSessions(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        console.error(e);
+        setErr(e?.message || "Không tải được danh sách phiên.");
+        setSessions([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Gom số ảnh đã upload từ localStorage + IndexedDB (client-side)
   useEffect(() => {
     (async () => {
       const ls = readLocalUploadCounts();
@@ -93,26 +142,19 @@ const Dashboard: React.FC = () => {
       const map = new Map<string, number>();
       ls.forEach((u) => map.set(u.sessionId, u.count));
       idb.forEach((u) => map.set(u.sessionId, u.count));
-      setUploads(Array.from(map.entries()).map(([sessionId, count]) => ({ sessionId, count })));
+      setUploads(
+        Array.from(map.entries()).map(([sessionId, count]) => ({
+          sessionId,
+          count,
+        }))
+      );
     })();
   }, []);
 
   const totalSessions = sessions.length;
-  const now = Date.now();
-
-  const running = sessions.filter(
-    (s) =>
-      s.startAt &&
-      s.endAt &&
-      new Date(s.startAt).getTime() <= now &&
-      new Date(s.endAt).getTime() >= now
-  );
-  const finished = sessions.filter(
-    (s) => s.endAt && new Date(s.endAt).getTime() < now
-  );
-  const upcoming = sessions.filter(
-    (s) => s.startAt && new Date(s.startAt).getTime() > now
-  );
+  const running = sessions.filter((s) => isRunning(s.startAt, s.endAt));
+  const finished = sessions.filter((s) => isFinished(s.endAt));
+  const upcoming = sessions.filter((s) => isUpcoming(s.startAt));
 
   // Pie: trạng thái các phiên
   const pieData = [
@@ -122,19 +164,26 @@ const Dashboard: React.FC = () => {
   ];
 
   // Bar: số ứng viên mỗi phiên
-  const barData = sessions.map((s) => ({
-    name: s.name.length > 10 ? s.name.slice(0, 10) + "…" : s.name,
-    candidates: s.candidates.length,
-  }));
+  const barData = sessions.map((s) => {
+    const names = Array.isArray(s.candidates)
+      ? (s.candidates as any[]).map((c: any) => (typeof c === "string" ? c : c?.name)).filter(Boolean)
+      : [];
+    const short = s.name.length > 10 ? s.name.slice(0, 10) + "…" : s.name;
+    return { name: short, candidates: names.length };
+  });
   const avgCandidates =
     sessions.length > 0
       ? (
-          sessions.reduce((sum, s) => sum + s.candidates.length, 0) /
-          sessions.length
+          sessions.reduce((sum, s) => {
+            const names = Array.isArray(s.candidates)
+              ? (s.candidates as any[]).map((c: any) => (typeof c === "string" ? c : c?.name)).filter(Boolean)
+              : [];
+            return sum + names.length;
+          }, 0) / sessions.length
         ).toFixed(1)
       : 0;
 
-  // Line: tổng phiếu upload theo thời gian
+  // Line: tổng phiếu upload theo thời gian (dựa mốc startAt của phiên)
   const lineData = uploads.map((u) => {
     const s = sessions.find((x) => x.id === u.sessionId);
     const date = s?.startAt ? new Date(s.startAt) : new Date();
@@ -151,23 +200,40 @@ const Dashboard: React.FC = () => {
     <div className="dashboard-container">
       <h1 className="dashboard-title">📊 Tổng quan kiểm phiếu</h1>
 
+      {err && (
+        <div
+          className="alert-error"
+          role="alert"
+          style={{
+            marginBottom: 16,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "#FEE2E2",
+            color: "#991B1B",
+            border: "1px solid #FCA5A5",
+          }}
+        >
+          {err}
+        </div>
+      )}
+
       {/* Thống kê tổng quan */}
       <section className="stats-overview">
         <div className="stat-card">
           <h3>Tổng số phiên</h3>
-          <p>{totalSessions}</p>
+          <p>{loading ? "…" : totalSessions}</p>
         </div>
         <div className="stat-card">
           <h3>Đang diễn ra</h3>
-          <p>{running.length}</p>
+          <p>{loading ? "…" : running.length}</p>
         </div>
         <div className="stat-card">
           <h3>Đã diễn ra</h3>
-          <p>{finished.length}</p>
+          <p>{loading ? "…" : finished.length}</p>
         </div>
         <div className="stat-card">
           <h3>Chưa diễn ra</h3>
-          <p>{upcoming.length}</p>
+          <p>{loading ? "…" : upcoming.length}</p>
         </div>
         <div className="stat-card">
           <h3>Phiếu đã upload</h3>
@@ -189,10 +255,10 @@ const Dashboard: React.FC = () => {
                 outerRadius={90}
                 innerRadius={50}
                 labelLine={false}
-                // ✅ Fix lỗi TypeScript: check typeof percent
                 label={(props) =>
-                  typeof props.percent === "number" && props.percent > 0
-                    ? `${(props.percent * 100).toFixed(0)}%`
+                  typeof (props as any).percent === "number" &&
+                  (props as any).percent > 0
+                    ? `${(((props as any).percent as number) * 100).toFixed(0)}%`
                     : ""
                 }
               >
@@ -243,13 +309,10 @@ const Dashboard: React.FC = () => {
         <div className="chart-card">
           <h3>Số lượng ứng viên mỗi phiên</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart
-              data={barData}
-              margin={{ top: 10, right: 10, bottom: 0, left: 0 }}
-            >
+            <BarChart data={barData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis allowDecimals={false} />
               <Tooltip />
               <Bar dataKey="candidates" fill={COLORS.running} />
             </BarChart>
@@ -263,21 +326,12 @@ const Dashboard: React.FC = () => {
         <div className="chart-card">
           <h3>Tổng phiếu upload theo thời gian</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart
-              data={lineData}
-              margin={{ top: 10, right: 10, bottom: 0, left: 0 }}
-            >
+            <LineChart data={lineData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis />
+              <YAxis allowDecimals={false} />
               <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="uploads"
-                stroke="#82ca9d"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-              />
+              <Line type="monotone" dataKey="uploads" stroke="#82ca9d" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

@@ -2,12 +2,12 @@
 const API_BASE = "http://localhost:5050/api";
 
 /** AUTH */
-export const login = async (email: string, password: string) => {
+export const login = async (email: string, password: string, remember = false) => {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",                 // 👈 COOKIE
-    body: JSON.stringify({ email, password })
+    credentials: "include",
+    body: JSON.stringify({ email, password, remember }), // 👈 thêm remember
   });
   if (!res.ok) throw new Error((await res.json()).message || "Đăng nhập thất bại");
   return await res.json();
