@@ -4,6 +4,7 @@ import { createSession as apiCreateSession } from "../../api";
 import "./CreateSession.css";
 
 const CreateSession: React.FC = () => {
+  
   const [sessionName, setSessionName] = useState("");
   const [voteType, setVoteType] = useState("tin-nhiem");
   const [candidates, setCandidates] = useState<string[]>([]);

@@ -24,7 +24,7 @@ export const getMe = async () => {
 export const logoutApi = async () => {
   const res = await fetch(`${API_BASE}/auth/logout`, {
     method: "POST",
-    credentials: "include",                 // 👈 COOKIE
+    credentials: "include",               
   });
   if (!res.ok) throw new Error("Đăng xuất lỗi");
   return await res.json();
