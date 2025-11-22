@@ -42,6 +42,10 @@ CREATE INDEX IF NOT EXISTS idx_uploads_session_id ON uploads(session_id);
 CREATE INDEX IF NOT EXISTS idx_uploads_uploaded_by ON uploads(uploaded_by);
 
 -- Insert default admin user (password: admin123)
+-- ⚠️ SECURITY WARNING: This default admin user should be changed or removed in production!
+-- For production deployments, either:
+-- 1. Remove this INSERT statement and create admin users manually
+-- 2. Use a secure setup script that generates random credentials
 -- Password hash for 'admin123' using bcrypt with salt rounds 10
 INSERT INTO users (username, email, password, role)
 VALUES ('admin', 'admin@votecounting.com', '$2b$10$7Zw/9u5nWv.EeqoVxE.ZxebKxOegxDX/.bnDkoJdpUb4EHJ7af7Z6', 'admin')

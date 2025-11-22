@@ -9,13 +9,20 @@ export const uploadFile = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { sessionId } = req.params;
 
+    // Validate sessionId is a positive integer
+    const sessionIdNum = parseInt(sessionId, 10);
+    if (isNaN(sessionIdNum) || sessionIdNum <= 0) {
+      res.status(400).json({ error: 'Invalid session ID' });
+      return;
+    }
+
     if (!req.file) {
       res.status(400).json({ error: 'No file uploaded' });
       return;
     }
 
     // Verify session exists
-    const sessionResult = await query('SELECT id FROM sessions WHERE id = $1', [sessionId]);
+    const sessionResult = await query('SELECT id FROM sessions WHERE id = $1', [sessionIdNum]);
     if (sessionResult.rows.length === 0) {
       // Delete uploaded file
       await fs.unlink(req.file.path);
@@ -29,7 +36,7 @@ export const uploadFile = async (req: AuthRequest, res: Response): Promise<void>
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, session_id, filename, original_name, file_size, mime_type, created_at`,
       [
-        sessionId,
+        sessionIdNum,
         req.file.filename,
         req.file.originalname,
         req.file.path,
@@ -50,6 +57,13 @@ export const getUploads = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { sessionId } = req.params;
 
+    // Validate sessionId is a positive integer
+    const sessionIdNum = parseInt(sessionId, 10);
+    if (isNaN(sessionIdNum) || sessionIdNum <= 0) {
+      res.status(400).json({ error: 'Invalid session ID' });
+      return;
+    }
+
     const result = await query(
       `SELECT 
         u.id, 
@@ -64,7 +78,7 @@ export const getUploads = async (req: AuthRequest, res: Response): Promise<void>
       LEFT JOIN users us ON u.uploaded_by = us.id
       WHERE u.session_id = $1
       ORDER BY u.created_at DESC`,
-      [sessionId]
+      [sessionIdNum]
     );
 
     res.json({ uploads: result.rows });
@@ -78,10 +92,31 @@ export const deleteUpload = async (req: AuthRequest, res: Response): Promise<voi
   try {
     const { sessionId, filename } = req.params;
 
+    // Validate sessionId is a positive integer
+    const sessionIdNum = parseInt(sessionId, 10);
+    if (isNaN(sessionIdNum) || sessionIdNum <= 0) {
+      res.status(400).json({ error: 'Invalid session ID' });
+      return;
+    }
+
+    // Validate filename to prevent path traversal attacks
+    // Only allow alphanumeric, dots, dashes, and underscores
+    const safeFilenameRegex = /^[a-zA-Z0-9._-]+$/;
+    if (!filename || !safeFilenameRegex.test(filename)) {
+      res.status(400).json({ error: 'Invalid filename' });
+      return;
+    }
+
+    // Check for path traversal sequences
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      res.status(400).json({ error: 'Invalid filename' });
+      return;
+    }
+
     // Get upload info
     const result = await query(
       'SELECT id, file_path FROM uploads WHERE session_id = $1 AND filename = $2',
-      [sessionId, filename]
+      [sessionIdNum, filename]
     );
 
     if (result.rows.length === 0) {
@@ -113,10 +148,17 @@ export const deleteAllUploads = async (req: AuthRequest, res: Response): Promise
   try {
     const { sessionId } = req.params;
 
+    // Validate sessionId is a positive integer
+    const sessionIdNum = parseInt(sessionId, 10);
+    if (isNaN(sessionIdNum) || sessionIdNum <= 0) {
+      res.status(400).json({ error: 'Invalid session ID' });
+      return;
+    }
+
     // Get all uploads for this session
     const result = await query(
       'SELECT id, file_path FROM uploads WHERE session_id = $1',
-      [sessionId]
+      [sessionIdNum]
     );
 
     // Delete all files
@@ -130,7 +172,7 @@ export const deleteAllUploads = async (req: AuthRequest, res: Response): Promise
     }
 
     // Delete from database
-    await query('DELETE FROM uploads WHERE session_id = $1', [sessionId]);
+    await query('DELETE FROM uploads WHERE session_id = $1', [sessionIdNum]);
 
     res.json({ 
       message: 'All uploads deleted successfully', 
