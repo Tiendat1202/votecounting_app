@@ -6,6 +6,7 @@ import FileType from 'file-type';
 import { uploadFile, getUploads, deleteUpload, deleteAllUploads } from '../controllers/uploadController';
 import { authenticate } from '../middleware/auth';
 import { config } from '../config';
+import { uploadLimiter, apiLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -65,9 +66,9 @@ const validateFileType = async (req: any, res: any, next: any) => {
   next();
 };
 
-router.post('/:sessionId', authenticate, upload.single('file'), validateFileType, uploadFile);
-router.get('/:sessionId', authenticate, getUploads);
-router.delete('/:sessionId/:filename', authenticate, deleteUpload);
-router.delete('/:sessionId', authenticate, deleteAllUploads);
+router.post('/:sessionId', uploadLimiter, authenticate, upload.single('file'), validateFileType, uploadFile);
+router.get('/:sessionId', apiLimiter, authenticate, getUploads);
+router.delete('/:sessionId/:filename', apiLimiter, authenticate, deleteUpload);
+router.delete('/:sessionId', apiLimiter, authenticate, deleteAllUploads);
 
 export default router;
