@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Login.css";
@@ -6,11 +6,26 @@ import "./Login.css";
 const Login: React.FC = () => {
   const { user, loading, login } = useAuth();
   const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("123456");
+  const [password, setPassword] = useState("password");
   const [remember, setRemember] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const nav = useNavigate();
+
+  // 👇 Load saved credentials on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("vc_saved_login");
+    if (saved) {
+      try {
+        const { email: savedEmail, password: savedPassword } = JSON.parse(saved);
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRemember(true);
+      } catch {
+        // Invalid saved data, use defaults
+      }
+    }
+  }, []);
 
   // Nếu đã đăng nhập rồi thì chuyển hướng luôn
   if (!loading && user) {
@@ -22,7 +37,15 @@ const Login: React.FC = () => {
     setErr(null);
     setBusy(true);
     try {
-      await login(email, password, remember); // 👈 truyền remember
+      await login(email, password, remember);
+      
+      // 👇 Save credentials if "Remember Me" checked
+      if (remember) {
+        localStorage.setItem("vc_saved_login", JSON.stringify({ email, password }));
+      } else {
+        localStorage.removeItem("vc_saved_login");
+      }
+      
       nav("/admin/dashboard", { replace: true });
     } catch (e: any) {
       setErr(e?.message || "Đăng nhập thất bại");

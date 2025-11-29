@@ -39,7 +39,7 @@ type UIImage = {
 };
 
 const nf = new Intl.NumberFormat("vi-VN");
-const BACKEND_BASE = "http://localhost:5050";
+const BACKEND_BASE = "http://localhost:5000";
 
 const UploadVotes: React.FC = () => {
   const { id: paramId } = useParams<{ id?: string }>();
@@ -63,10 +63,9 @@ const UploadVotes: React.FC = () => {
   // ---- CHẶN ĐIỀU HƯỚNG TOÀN TRANG KHI KÉO/THẢ NGOÀI DROPZONE ----
   useEffect(() => {
     const onDragOver = (e: DragEvent) => {
-      e.preventDefault(); // tránh UI đổi icon cấm + cho phép drop
+      e.preventDefault();
     };
     const onDrop = (e: DragEvent) => {
-      // Nếu người dùng thả ngoài vùng xử lý của chúng ta, ngăn điều hướng file
       e.preventDefault();
     };
     window.addEventListener("dragover", onDragOver);
@@ -132,9 +131,13 @@ const UploadVotes: React.FC = () => {
         const ui = list.map((fn) => ({
           id: fn,
           name: fn,
-          url: `${BACKEND_BASE}/uploads/${fn}`,
+          url: `${BACKEND_BASE}/uploads/${selectedSessionId}/${fn}`,
         }));
         setImages(ui);
+        
+        // 👇 Lưu vào localStorage
+        const key = `vc_images_${selectedSessionId}`;
+        localStorage.setItem(key, JSON.stringify(ui));
       } catch (e) {
         console.error("Lỗi tải danh sách ảnh:", e);
         setImages([]);
@@ -157,17 +160,26 @@ const UploadVotes: React.FC = () => {
           name: f.originalname || f.filename,
           size: f.size,
           addedAt: Date.now(),
-          url: `${BACKEND_BASE}/uploads/${f.filename}`,
+          url: `${BACKEND_BASE}/uploads/${selectedSessionId}/${f.filename}`,
         }));
-        setImages((prev) => [...appended, ...prev]);
+        const updated = [...appended, ...images];
+        setImages(updated);
+        
+        // 👇 Lưu vào localStorage
+        const key = `vc_images_${selectedSessionId}`;
+        localStorage.setItem(key, JSON.stringify(updated));
       } else {
         const list: string[] = await getUploadedFiles(selectedSessionId);
         const ui = list.map((fn) => ({
           id: fn,
           name: fn,
-          url: `${BACKEND_BASE}/uploads/${fn}`,
+          url: `${BACKEND_BASE}/uploads/${selectedSessionId}/${fn}`,
         }));
         setImages(ui);
+        
+        // 👇 Lưu vào localStorage
+        const key = `vc_images_${selectedSessionId}`;
+        localStorage.setItem(key, JSON.stringify(ui));
       }
     } catch (err: any) {
       alert(`Upload thất bại: ${err?.message || "Không rõ lỗi"}`);
@@ -183,7 +195,12 @@ const UploadVotes: React.FC = () => {
     if (!selectedSessionId) return;
     try {
       await deleteUploadedFile(selectedSessionId, filename);
-      setImages((prev) => prev.filter((img) => img.id !== filename));
+      const updated = images.filter((img) => img.id !== filename);
+      setImages(updated);
+      
+      // 👇 Cập nhật localStorage
+      const key = `vc_images_${selectedSessionId}`;
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch (e) {
       alert("Lỗi khi xóa ảnh.");
       console.error(e);
@@ -197,6 +214,10 @@ const UploadVotes: React.FC = () => {
     try {
       await deleteAllUploadedFiles(selectedSessionId);
       setImages([]);
+      
+      // 👇 Xóa khỏi localStorage
+      const key = `vc_images_${selectedSessionId}`;
+      localStorage.removeItem(key);
     } catch (e) {
       alert("Lỗi khi xóa tất cả ảnh.");
       console.error(e);
@@ -289,7 +310,7 @@ const UploadVotes: React.FC = () => {
       {/* Thư viện ảnh */}
       <section className="gallery-section">
         <div className="gallery-header">
-          <h2>Ảnh đã tải {selectedSession ? `— ${selectedSession.name}` : ""}</h2>
+          <h2>Ảnh đã tải:</h2>
         </div>
 
         {images.length === 0 ? (
@@ -301,7 +322,7 @@ const UploadVotes: React.FC = () => {
                 <img
                   src={img.url}
                   alt={img.name}
-                  onClick={() => openViewer(idx)} // mở full ảnh
+                  onClick={() => openViewer(idx)}
                   style={{ cursor: "zoom-in" }}
                 />
                 <figcaption>
