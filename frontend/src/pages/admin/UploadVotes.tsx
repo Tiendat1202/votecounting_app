@@ -39,7 +39,7 @@ type UIImage = {
 };
 
 const nf = new Intl.NumberFormat("vi-VN");
-const BACKEND_BASE = "http://localhost:5000";
+const BACKEND_BASE = "http://localhost:5050";
 
 const UploadVotes: React.FC = () => {
   const { id: paramId } = useParams<{ id?: string }>();

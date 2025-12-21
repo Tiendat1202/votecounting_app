@@ -1,5 +1,5 @@
 // src/api.ts
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "http://localhost:5050/api";
 
 /** AUTH */
 export const login = async (email: string, password: string, remember = false) => {
@@ -94,7 +94,7 @@ export const getHealth = async () => {
    🔹 XOÁ ẢNH TRÊN SERVER
    =========================== */
 export const deleteUploadedFile = async (sessionId: string, filename: string) => {
-  const res = await fetch(`http://localhost:5000/api/uploads/${sessionId}/${filename}`, {
+  const res = await fetch(`http://localhost:5050/api/uploads/${sessionId}/${filename}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Không thể xóa ảnh");
@@ -102,7 +102,7 @@ export const deleteUploadedFile = async (sessionId: string, filename: string) =>
 };
 
 export const deleteAllUploadedFiles = async (sessionId: string) => {
-  const res = await fetch(`http://localhost:5000/api/uploads/${sessionId}`, {
+  const res = await fetch(`http://localhost:5050/api/uploads/${sessionId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Không thể xóa toàn bộ ảnh");
