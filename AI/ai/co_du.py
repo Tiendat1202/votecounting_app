@@ -29,6 +29,19 @@ def _load_api_key() -> str:
     return key
 
 
+def process_surplus(
+    image_path: str,
+    ballot_id: Optional[str] = None,
+    model_id: str = "Qwen/Qwen2.5-VL-72B-Instruct",
+    prompt_version: int = 1,
+    temperature: float = 0.0,
+) -> Dict[str, Any]:
+    """
+    Wrapper cho process_surplus_raw - xử lý phiếu có số dư.
+    """
+    return process_surplus_raw(image_path, ballot_id, model_id, prompt_version, temperature)
+
+
 def process_surplus_raw(
     image_path: str,
     ballot_id: Optional[str] = None,

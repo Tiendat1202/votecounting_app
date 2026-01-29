@@ -7,9 +7,14 @@ import path from "path";
 import fs from "fs";
 import { AppDataSource } from "./config/database";
 import { VoteSession } from "./entities/VoteSession";
+import { Vote } from "./entities/Vote";
 import voteRoutes from "./routes/voteRoutes";
 import authRoutes from "./routes/authRoutes";
+import aiRoutes from "./routes/aiRoutes";
+import voteControllerRoutes from "./routes/voteControllerRoutes";
 import { errorHandler } from "./middleware/errorHandler";
+import aiService from "./services/aiService";
+import { VoteService } from "./services/voteService";
 
 dotenv.config();
 
@@ -78,6 +83,12 @@ app.use("/api", voteRoutes);
 // Mount real auth routes (replace the previous fake endpoints)
 app.use("/api/auth", authRoutes);
 
+// Mount AI routes
+app.use("/api/ai", aiRoutes);
+
+// Mount vote controller routes
+app.use("/api/votes", voteControllerRoutes);
+
 // ===== SESSIONS =====
 app.get("/api/sessions", async (req: Request, res: Response) => {
   try {
@@ -130,17 +141,77 @@ app.get("/api/stats", async (req: Request, res: Response) => {
 });
 
 // ===== UPLOADS =====
-app.post("/api/uploads/:sessionId", upload.array("files", 50), (req: Request, res: Response) => {
+app.post("/api/uploads/:sessionId", upload.array("files", 50), async (req: Request, res: Response) => {
   const { sessionId } = req.params;
   const files = (req.files as Express.Multer.File[]) || [];
   
+  if (files.length === 0) {
+    return res.status(400).json({ error: "No files uploaded" });
+  }
+
+  // Lấy voteType từ query hoặc mặc định là "trust"
+  const voteType = (req.query.voteType as "trust" | "surplus") || "trust";
+
+  // Trả response ngay
   res.json({
+    success: true,
     files: files.map(f => ({
       filename: f.filename,
       originalname: f.originalname,
       size: f.size
-    }))
+    })),
+    message: `Uploaded ${files.length} files. AI processing started in background.`
   });
+
+  // Xử lý AI bất đồng bộ
+  (async () => {
+    for (const file of files) {
+      try {
+        const imagePath = file.path;
+        const voteId = `vote_${Date.now()}_${file.filename}`;
+
+        console.log(`Processing ${file.filename} with AI (voteType: ${voteType})...`);
+
+        // Gọi AI xử lý
+        const aiResult = await aiService.processAndWait(
+          voteType,
+          imagePath,
+          1000, // poll every 1 second
+          120000 // max wait 2 minutes
+        );
+
+        // Lưu kết quả vào database
+        await VoteService.processAndSaveVote(
+          sessionId,
+          voteId,
+          voteType,
+          aiResult,
+          file.filename
+        );
+
+        console.log(`AI processed ${file.filename}: ${aiResult.parsed?.candidate_name || "N/A"}`);
+      } catch (error) {
+        console.error(`AI processing failed for ${file.filename}:`, error);
+        
+        // Lưu lỗi vào database với status invalid
+        try {
+          await VoteService.processAndSaveVote(
+            sessionId,
+            `vote_${Date.now()}_${file.filename}`,
+            voteType,
+            {
+              ok: false,
+              error: error instanceof Error ? error.message : "AI processing failed",
+              parsed: null,
+            } as any,
+            file.filename
+          );
+        } catch (saveError) {
+          console.error(`Failed to save error record:`, saveError);
+        }
+      }
+    }
+  })();
 });
 
 app.get("/api/uploads/:sessionId", (req: Request, res: Response) => {
@@ -160,33 +231,87 @@ app.get("/api/uploads/:sessionId", (req: Request, res: Response) => {
   }
 });
 
-app.delete("/api/uploads/:sessionId/:filename", (req: Request, res: Response) => {
+app.delete("/api/uploads/:sessionId/:filename", async (req: Request, res: Response) => {
   const { sessionId, filename } = req.params;
   const filepath = path.join(uploadsDir, sessionId, filename);
   
   try {
+    // Xóa file ảnh
     if (fs.existsSync(filepath)) {
       fs.unlinkSync(filepath);
     }
-    res.json({ message: "File deleted successfully" });
+    
+    // Xóa vote trong database dựa trên imageUrl
+    const voteRepository = AppDataSource.getRepository(Vote);
+    await voteRepository.delete({
+      sessionId: sessionId,
+      imageUrl: filename
+    });
+    
+    res.json({ message: "File and vote deleted successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to delete file" });
   }
 });
 
-app.delete("/api/uploads/:sessionId", (req: Request, res: Response) => {
+app.delete("/api/uploads/:sessionId", async (req: Request, res: Response) => {
   const { sessionId } = req.params;
   const sessionDir = path.join(uploadsDir, sessionId);
   
   try {
+    // Xóa tất cả file ảnh
     if (fs.existsSync(sessionDir)) {
       fs.rmSync(sessionDir, { recursive: true, force: true });
     }
-    res.json({ message: "All files deleted successfully" });
+    
+    // Xóa tất cả votes của session trong database
+    const voteRepository = AppDataSource.getRepository(Vote);
+    await voteRepository.delete({ sessionId: sessionId });
+    
+    res.json({ message: "All files and votes deleted successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to delete files" });
+  }
+});
+
+// ===== RESULTS =====
+app.get("/api/results/:sessionId", async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const voteRepository = AppDataSource.getRepository(Vote);
+    const votes = await voteRepository.find({
+      where: { sessionId },
+      relations: ["session"],
+      order: { createdAt: "DESC" }
+    });
+    res.json({
+      success: true,
+      message: "Votes retrieved successfully",
+      data: votes
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch votes" });
+  }
+});
+
+app.get("/api/results", async (req: Request, res: Response) => {
+  try {
+    const voteRepository = AppDataSource.getRepository(Vote);
+    const votes = await voteRepository.find({
+      relations: ["session"],
+      order: { createdAt: "DESC" }
+    });
+    res.json({
+      success: true,
+      message: "Votes retrieved successfully",
+      data: votes
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch votes" });
   }
 });
 

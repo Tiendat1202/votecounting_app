@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const nav = useNavigate();
 
-  // 👇 Load saved credentials on mount
+  // Load saved credentials on mount
   useEffect(() => {
     const saved = localStorage.getItem("vc_saved_login");
     if (saved) {
@@ -39,7 +39,7 @@ const Login: React.FC = () => {
     try {
       await login(email, password, remember);
       
-      // 👇 Save credentials if "Remember Me" checked
+      // Save credentials if "Remember Me" checked
       if (remember) {
         localStorage.setItem("vc_saved_login", JSON.stringify({ email, password }));
       } else {

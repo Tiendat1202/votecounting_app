@@ -4,6 +4,67 @@ import base64, mimetypes
 from dotenv import load_dotenv
 import hashlib
 
+def process_trust(image_path: str, ballot_id: str = None) -> dict:
+    """
+    Xử lý phiếu tín nhiệm.
+    Gọi Together API để phân tích ảnh và trả kết quả JSON.
+    """
+    from typing import Optional
+    
+    def file_to_data_uri(path: str) -> str:
+        mime, _ = mimetypes.guess_type(path)
+        if not mime:
+            mime = "image/jpeg"
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
+        return f"data:{mime};base64,{b64}"
+    
+    data_uri = file_to_data_uri(image_path)
+    
+    response = client.chat.completions.create(
+        model=MODEL_ID,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Phân tích lá phiếu trong ảnh và CHỈ trả JSON theo cấu trúc đã nêu."},
+                    {"type": "image_url", "image_url": {"url": data_uri}}
+                ],
+            },
+        ],
+        temperature=0.0, 
+    )
+    
+    try:
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        
+        # Gắn ballot_id
+        if ballot_id and not data.get("ballot_id"):
+            data["ballot_id"] = ballot_id
+        
+        # Áp dụng luật
+        agree_total = sum(1 for r in data.get("ballot_details", []) if r.get("agree") is True)
+        reasons = set(data.get("invalid_reasons", []))
+        
+        if agree_total == 0:
+            data["validity"] = "INVALID"
+            reasons.add("NO_ANY_AGREE")
+        
+        data["invalid_reasons"] = list(reasons)
+        
+        return data
+    except json.JSONDecodeError as e:
+        return {
+            "ballot_id": ballot_id,
+            "validity": "INVALID",
+            "invalid_reasons": [f"JSON decode error: {str(e)}"],
+            "ballot_details": []
+        }
+
+
 # ====== NẠP API KEY ======
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # /app
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -17,7 +78,7 @@ client = Together(api_key=api_key)
 
 # ====== CẤU HÌNH ======
 MODEL_ID = "Qwen/Qwen2.5-VL-72B-Instruct"
-LOCAL_IMAGE_PATH = input("Nhập đường dẫn ảnh phiếu: ").strip()
+LOCAL_IMAGE_PATH = None
 OUTPUT_JSON = "result.json"
 
 # ====== TẠO ballot_id ======
@@ -149,7 +210,7 @@ try:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(json.dumps(data, ensure_ascii=False, indent=2))
-    print(f"✅ Đã lưu kết quả phiếu vào: {outfile}")
+    print(f"Đã lưu kết quả phiếu vào: {outfile}")
 
 except json.JSONDecodeError:
     print("Model không trả JSON hợp lệ.")

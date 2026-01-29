@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import * as XLSX from "xlsx";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -14,12 +13,28 @@ import {
 import "./Results.css";
 import ResultAssistant from "../components/ResultAssistant";
 
+interface Vote {
+  id: string;
+  sessionId: string;
+  voteId: string;
+  voteType: string;
+  candidate: string;
+  confidenceScore: number;
+  rawData: string;
+  status?: string;
+  session?: {
+    id: string;
+    name: string;
+    type: string;
+    candidates: string[];
+  };
+}
 
 interface Candidate {
   name: string;
-  validVotes: number;    // tổng phiếu hợp lệ (toàn cuộc)
-  invalidVotes: number;  // tổng phiếu không hợp lệ (toàn cuộc)
-  votesReceived: number; // phiếu bầu cho ứng viên
+  validVotes: number;
+  invalidVotes: number;
+  votesReceived: number;
   isElected: boolean;
 }
 
@@ -30,89 +45,196 @@ function truncateName(name: string, max = 14) {
   return name.length > max ? name.slice(0, max - 1) + "…" : name;
 }
 
+interface Session {
+  id: string;
+  name: string;
+  type: string;
+  startAt: string;
+  endAt: string;
+}
+
 const Results: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [totalValid, setTotalValid] = useState<number>(0);
   const [totalInvalid, setTotalInvalid] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  useEffect(() => {
+    fetchSessions();
+  }, []);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const binaryStr = event.target?.result;
-      const workbook = XLSX.read(binaryStr as string, { type: "binary" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  useEffect(() => {
+    if (selectedSessionId) {
+      fetchAndProcessVotes(selectedSessionId);
+    }
+  }, [selectedSessionId]);
 
-      const processed = processElectionResults(data as any[]);
+  const fetchSessions = async () => {
+    try {
+      const response = await fetch("/api/sessions");
+      if (!response.ok) {
+        throw new Error("Không thể lấy danh sách phiên bầu cử");
+      }
+      const data = await response.json();
+      setSessions(data);
+      
+      // Tự động chọn phiên đầu tiên
+      if (data.length > 0) {
+        setSelectedSessionId(data[0].id);
+      } else {
+        setLoading(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
+      console.error("Error fetching sessions:", err);
+      setLoading(false);
+    }
+  };
+
+  const fetchAndProcessVotes = async (sessionId: string) => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const response = await fetch(`/api/results/${sessionId}`);
+      if (!response.ok) {
+        throw new Error("Không thể lấy dữ liệu votes từ server");
+      }
+
+      const data = await response.json();
+      const votes: Vote[] = data.data || [];
+
+      if (votes.length === 0) {
+        setLoading(false);
+        setCandidates([]);
+        setTotalValid(0);
+        setTotalInvalid(0);
+        return;
+      }
+
+      const processed = processVotesFromDB(votes);
       setCandidates(processed.candidates);
       setTotalValid(processed.totalValid);
       setTotalInvalid(processed.totalInvalid);
-    };
-    reader.readAsBinaryString(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
+      console.error("Error fetching votes:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Parse Excel: Họ và tên | Phiếu hợp lệ (tổng) | Phiếu không hợp lệ (tổng) | Phiếu bầu
-  const processElectionResults = (rows: any[]) => {
-    const body = rows.slice(1).filter((r) => Array.isArray(r) && r.length >= 4);
+  // Parse dữ liệu từ API: tìm các ứng viên duy nhất và đếm phiếu
+  const processVotesFromDB = (votes: Vote[]) => {
+    const candidateMap = new Map<string, number>();
+    let totalValidVotes = 0;
+    let totalInvalidVotes = 0;
+    let allCandidates: string[] = [];
 
-    let maxValid = 0;
-    let maxInvalid = 0;
+    // Lấy danh sách tất cả ứng viên từ session (nếu có)
+    if (votes.length > 0 && votes[0].session?.candidates) {
+      allCandidates = votes[0].session.candidates;
+    }
 
-    const parsed: Candidate[] = body.map((row: any[]) => {
-      const [rawName, validVotes, invalidVotes, votesReceived] = row;
-      const name = String(rawName ?? "").trim();
-      const vv = Number(validVotes) || 0;
-      const iv = Number(invalidVotes) || 0;
-      const vr = Number(votesReceived) || 0;
-
-      if (vv > maxValid) maxValid = vv;
-      if (iv > maxInvalid) maxInvalid = iv;
-
-      return {
-        name,
-        validVotes: vv,
-        invalidVotes: iv,
-        votesReceived: vr,
-        isElected: vv > 0 && vr / vv > 0.5,
-      };
+    votes.forEach((vote) => {
+      // Đếm phiếu hợp lệ
+      if (vote.status !== "invalid") {
+        totalValidVotes++;
+        
+        // Parse candidate names từ cột candidate (có thể là danh sách)
+        if (vote.candidate) {
+          const names = vote.candidate.split(",").map((n) => n.trim());
+          names.forEach((name) => {
+            if (name) {
+              candidateMap.set(name, (candidateMap.get(name) || 0) + 1);
+            }
+          });
+        }
+      } else {
+        totalInvalidVotes++;
+      }
     });
 
-    const totalValid = maxValid;
-    const totalInvalid = maxInvalid;
+    // Nếu có danh sách ứng viên từ session, dùng nó làm cơ sở
+    const candidateNames = allCandidates.length > 0 
+      ? allCandidates 
+      : Array.from(candidateMap.keys());
+
+    const parsed: Candidate[] = candidateNames.map((name) => ({
+      name,
+      validVotes: totalValidVotes,
+      invalidVotes: totalInvalidVotes,
+      votesReceived: candidateMap.get(name) || 0,
+      isElected: totalValidVotes > 0 && (candidateMap.get(name) || 0) / totalValidVotes > 0.5,
+    }));
 
     const sorted = parsed.sort((a, b) => b.votesReceived - a.votesReceived);
 
-    const normalized = sorted.map((c) => ({
-      ...c,
-      validVotes: totalValid,
-      invalidVotes: totalInvalid,
-    }));
-
-    return { candidates: normalized, totalValid, totalInvalid };
+    return {
+      candidates: sorted,
+      totalValid: totalValidVotes,
+      totalInvalid: totalInvalidVotes,
+    };
   };
 
   const totalVotes = totalValid + totalInvalid;
+
+  if (loading) {
+    return (
+      <div className="results-container">
+        <h1 className="results-title">Kết quả bầu cử</h1>
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="results-container">
+        <h1 className="results-title">Kết quả bầu cử</h1>
+        <div style={{ textAlign: "center", padding: "40px", color: "red" }}>
+          <p>Lỗi: {error}</p>
+          <button onClick={fetchSessions} style={{ marginTop: "10px", padding: "8px 16px" }}>
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="results-container">
       <h1 className="results-title">Kết quả bầu cử</h1>
 
-      <section className="results-actions" aria-label="Tải dữ liệu kết quả">
-        <label htmlFor="fileUpload" className="upload-label">
-          <span>Chọn tệp Excel</span>
-          <input
-            id="fileUpload"
-            type="file"
-            accept=".xls,.xlsx,.csv"
-            onChange={handleFileUpload}
-          />
-        </label>
-        <p className="helper-text">
-          Định dạng cột: Họ và tên | Phiếu hợp lệ (tổng) | Phiếu không hợp lệ (tổng) | Phiếu bầu
-        </p>
+      <section className="results-actions" aria-label="Chọn phiên bầu cử">
+        <div style={{ marginBottom: "20px" }}>
+          <label htmlFor="sessionSelect" style={{ marginRight: "10px", fontWeight: "500" }}>
+            Chọn phiên bầu cử:
+          </label>
+          <select
+            id="sessionSelect"
+            value={selectedSessionId}
+            onChange={(e) => setSelectedSessionId(e.target.value)}
+            style={{ padding: "8px 12px", fontSize: "14px", minWidth: "200px" }}
+          >
+            {sessions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.name} - {session.type === "tin-nhiem" ? "Tín nhiệm" : "Số dư"}
+              </option>
+            ))}
+          </select>
+          <button 
+            onClick={() => fetchAndProcessVotes(selectedSessionId)} 
+            style={{ padding: "8px 16px", cursor: "pointer", marginLeft: "10px" }}
+          >
+            Làm mới dữ liệu
+          </button>
+        </div>
       </section>
 
       {/* 3 card thống kê */}

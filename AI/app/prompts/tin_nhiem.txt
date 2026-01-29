@@ -23,10 +23,10 @@ Yêu cầu:
 
 Cấu trúc JSON:
 {
-  "ballot_id": "<string|null>",
+  "vote_id": "<string|null>",
   "validity": "VALID|INVALID",
   "invalid_reasons": ["<string>"],
-  "ballot_details": [
+  "vote_details": [
     {
       "stt": <int>,
       "name": "<string>",

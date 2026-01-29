@@ -1,0 +1,16 @@
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v7.1.5  ready in 748 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+8:14:54 AM [vite] (client) hmr update /src/context/AuthContext.tsx, /src/pages/admin/Dashboard.tsx, /src/pages/admin/Sessions.tsx, /src/pages/admin/CreateSession.tsx, /src/pages/admin/UploadVotes.tsx, /src/components/BallotProcessor.tsx
+8:14:54 AM [vite] (client) hmr update /src/context/AuthContext.tsx, /src/pages/admin/Dashboard.tsx, /src/pages/admin/Sessions.tsx, /src/pages/admin/CreateSession.tsx, /src/pages/admin/UploadVotes.tsx
+8:14:54 AM [vite] (client) hmr update /src/pages/admin/UploadVotes.tsx
+8:14:55 AM [vite] (client) hmr update /src/pages/admin/UploadVotes.tsx
+8:14:55 AM [vite] (client) hmr invalidate /src/context/AuthContext.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:14:55 AM [vite] (client) hmr update /src/App.tsx, /src/components/Navbar.tsx, /src/pages/Login.tsx

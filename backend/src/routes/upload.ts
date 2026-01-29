@@ -2,6 +2,8 @@ import express, { Request, Response } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import aiService from "../services/aiService";
+import { VoteService } from "../services/voteService";
 
 const router = express.Router();
 
@@ -31,19 +33,81 @@ const upload = multer({
   },
 });
 
-// Upload ảnh
-router.post("/api/upload/:sessionId", upload.array("files", 50), (req: Request, res: Response) => {
+// Upload ảnh VÀ tự động xử lý AI
+router.post("/api/upload/:sessionId", upload.array("files", 50), async (req: Request, res: Response) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "No files uploaded" });
   }
 
-  const files = (req.files as Express.Multer.File[]).map((f) => ({
+  const { sessionId } = req.params;
+  const uploadedFiles = req.files as Express.Multer.File[];
+  
+  const files = uploadedFiles.map((f) => ({
     filename: f.filename,
     originalname: f.originalname,
     size: f.size,
   }));
 
-  res.json({ success: true, files });
+  // Lấy ballotType từ query hoặc mặc định là "trust"
+  const ballotType = (req.query.ballotType as "trust" | "surplus") || "trust";
+
+  // Gửi ảnh cho AI xử lý ngay (background job)
+  // Không đợi AI xong, trả về response ngay
+  res.json({ 
+    success: true, 
+    files,
+    message: `Uploaded ${files.length} files. AI processing started in background.`
+  });
+
+  // Xử lý AI bất đồng bộ
+  (async () => {
+    for (const file of uploadedFiles) {
+      try {
+        const imagePath = file.path;
+        const ballotId = `ballot_${Date.now()}_${file.filename}`;
+
+        console.log(`Processing ${file.filename} with AI...`);
+
+        // Gọi AI xử lý
+        const aiResult = await aiService.processAndWait(
+          ballotType,
+          imagePath,
+          1000, // poll every 1 second
+          120000 // max wait 2 minutes
+        );
+
+        // Lưu kết quả vào database
+        await VoteService.processAndSaveVote(
+          sessionId,
+          ballotId,
+          ballotType,
+          aiResult,
+          file.filename
+        );
+
+        console.log(`AI processed ${file.filename}: ${aiResult.parsed?.candidate_name || "N/A"}`);
+      } catch (error) {
+        console.error(`AI processing failed for ${file.filename}:`, error);
+        
+        // Lưu lỗi vào database với status invalid
+        try {
+          await VoteService.processAndSaveVote(
+            sessionId,
+            `ballot_${Date.now()}_${file.filename}`,
+            ballotType,
+            {
+              ok: false,
+              error: error instanceof Error ? error.message : "AI processing failed",
+              parsed: null,
+            } as any,
+            file.filename
+          );
+        } catch (saveError) {
+          console.error(`Failed to save error record:`, saveError);
+        }
+      }
+    }
+  })();
 });
 
 // Get uploaded files

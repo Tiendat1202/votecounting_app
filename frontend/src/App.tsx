@@ -16,6 +16,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Sessions from "./pages/admin/Sessions";
 import CreateSession from "./pages/admin/CreateSession";
 import UploadVotes from "./pages/admin/UploadVotes";
+import { VoteCountingSession } from "./pages/VoteCountingSession";
 
 // --------- Inline guard: RequireAuth (bảo vệ trang admin) ----------
 import { useAuth } from "./context/AuthContext";
@@ -51,6 +52,7 @@ function App() {
               <Route path="/admin/upload" element={<UploadVotes />} />
               <Route path="/admin/upload/:id" element={<UploadVotes />} />
               <Route path="/admin/results/:id" element={<Results />} />
+              <Route path="/vote-counting" element={<VoteCountingSession />} />
             </Route>
 
             {/* 404 */}

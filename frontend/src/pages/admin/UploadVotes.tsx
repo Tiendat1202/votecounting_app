@@ -135,7 +135,7 @@ const UploadVotes: React.FC = () => {
         }));
         setImages(ui);
         
-        // 👇 Lưu vào localStorage
+        // Lưu vào localStorage
         const key = `vc_images_${selectedSessionId}`;
         localStorage.setItem(key, JSON.stringify(ui));
       } catch (e) {
@@ -153,7 +153,9 @@ const UploadVotes: React.FC = () => {
 
     try {
       setBusy(true);
-      const result = await uploadVoteFiles(selectedSessionId, accepted);
+      // Lấy session type để truyền vào API
+      const session = allSessions.find(s => s.id === selectedSessionId);
+      const result = await uploadVoteFiles(selectedSessionId, accepted, session?.type);
       if (result?.files?.length) {
         const appended: UIImage[] = result.files.map((f: any) => ({
           id: f.filename,
@@ -165,9 +167,14 @@ const UploadVotes: React.FC = () => {
         const updated = [...appended, ...images];
         setImages(updated);
         
-        // 👇 Lưu vào localStorage
+        // Lưu vào localStorage
         const key = `vc_images_${selectedSessionId}`;
         localStorage.setItem(key, JSON.stringify(updated));
+
+        // Thông báo AI đang xử lý
+        if (result.message) {
+          alert(`${result.message}\n\nĐã tải lên`);
+        }
       } else {
         const list: string[] = await getUploadedFiles(selectedSessionId);
         const ui = list.map((fn) => ({
@@ -177,7 +184,7 @@ const UploadVotes: React.FC = () => {
         }));
         setImages(ui);
         
-        // 👇 Lưu vào localStorage
+        // Lưu vào localStorage
         const key = `vc_images_${selectedSessionId}`;
         localStorage.setItem(key, JSON.stringify(ui));
       }
@@ -198,7 +205,7 @@ const UploadVotes: React.FC = () => {
       const updated = images.filter((img) => img.id !== filename);
       setImages(updated);
       
-      // 👇 Cập nhật localStorage
+      // Cập nhật localStorage
       const key = `vc_images_${selectedSessionId}`;
       localStorage.setItem(key, JSON.stringify(updated));
     } catch (e) {
@@ -215,7 +222,7 @@ const UploadVotes: React.FC = () => {
       await deleteAllUploadedFiles(selectedSessionId);
       setImages([]);
       
-      // 👇 Xóa khỏi localStorage
+      // Xóa khỏi localStorage
       const key = `vc_images_${selectedSessionId}`;
       localStorage.removeItem(key);
     } catch (e) {
@@ -231,15 +238,24 @@ const UploadVotes: React.FC = () => {
     handleFiles(e.dataTransfer.files);
   };
 
-  const selectedSession = allSessions.find((s) => s.id === selectedSessionId) || null;
-
   // open/close viewer
   const openViewer = (index: number) => setViewer({ open: true, index });
   const closeViewer = () => setViewer((v) => ({ ...v, open: false }));
 
   return (
     <div className="upload-container">
-      <h1 className="upload-title">Tải ảnh lá phiếu (AI)</h1>
+      <h1 className="upload-title">Tải ảnh lá phiếu (AI tự động xử lý)</h1>
+
+      {/* Thông báo */}
+      <div style={{ 
+        padding: "12px", 
+        backgroundColor: "#e3f2fd", 
+        borderLeft: "4px solid #2196f3",
+        marginBottom: "20px",
+        borderRadius: "4px"
+      }}>
+        
+      </div>
 
       {/* Chọn phiên */}
       <section className="upload-section">

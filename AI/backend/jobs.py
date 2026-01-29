@@ -1,17 +1,31 @@
 import time
 from typing import Dict, Any
 
-# Import stage1 AI
+# Import stage1 AI (legacy support)
 from ai.co_du import process_trust
 from ai.khong_du import process_surplus
+
+# Import pluggable ballot processor
+from .ballot_processor import process_ballot
 
 from .storage import save_result
 
 def run_inference_job(batch_id: str, job_id: str, ballot_type: str, image_path: str,
-                      model_name: str | None = None, prompt_version: int = 1) -> Dict[str, Any]:
+                      model_name: str | None = None, prompt_version: int = 1, use_processor: bool = True) -> Dict[str, Any]:
     """
-    Worker job: chạy AI Stage1 cho 1 ảnh, lưu JSON kết quả.
-    ballot_type: "trust" | "surplus"
+    Worker job: chạy ballot processor hoặc legacy AI stage1 cho 1 ảnh.
+    
+    Args:
+        batch_id: Batch identifier
+        job_id: Job identifier
+        ballot_type: "trust" | "surplus"
+        image_path: Path to ballot image
+        model_name: Optional model name
+        prompt_version: Prompt version (legacy)
+        use_processor: Use new pluggable processor (default: True)
+        
+    Returns:
+        Processing result dict
     """
     t0 = time.time()
     ok = True
@@ -21,13 +35,17 @@ def run_inference_job(batch_id: str, job_id: str, ballot_type: str, image_path: 
     usage = None
 
     try:
-        if ballot_type == "trust":
-            # Bạn sửa process_trust để nhận prompt_version/model_name nếu cần
-            parsed = process_trust(image_path, ballot_id=job_id)
-        elif ballot_type == "surplus":
-            parsed = process_surplus(image_path, ballot_id=job_id)
+        if use_processor:
+            # Use new pluggable processor
+            parsed = process_ballot(image_path, ballot_type, batch_id, job_id)
         else:
-            raise ValueError("ballot_type must be 'trust' or 'surplus'")
+            # Legacy: use stage1 AI
+            if ballot_type == "trust":
+                parsed = process_trust(image_path, ballot_id=job_id)
+            elif ballot_type == "surplus":
+                parsed = process_surplus(image_path, ballot_id=job_id)
+            else:
+                raise ValueError("ballot_type must be 'trust' or 'surplus'")
     except Exception as e:
         ok = False
         err = str(e)
@@ -42,8 +60,8 @@ def run_inference_job(batch_id: str, job_id: str, ballot_type: str, image_path: 
         "ok": ok,
         "error": err,
         "latency_ms": latency_ms,
-        "usage": usage,     # nếu bạn lấy token từ Together thì gắn vào đây
-        "parsed": parsed,   # JSON thô Stage1
+        "usage": usage,
+        "parsed": parsed,
     }
 
     save_result(batch_id, job_id, result)

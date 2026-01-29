@@ -1,5 +1,5 @@
 import "./Home.css";
-import { Link } from "react-router-dom"; // ✅ thêm import
+import { Link } from "react-router-dom"; // thêm import
 
 export default function Home() {
   return (
@@ -12,7 +12,7 @@ export default function Home() {
           thị giác - ngôn ngữ.
         </p>
 
-        {/* ✅ đổi button thành Link */}
+        {/* đổi button thành Link */}
         <Link to="/results" className="btn-primary">
           Xem kết quả bầu cử
         </Link>

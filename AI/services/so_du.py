@@ -138,7 +138,7 @@ try:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(json.dumps(data, ensure_ascii=False, indent=2))
-    print(f"✅ Đã lưu kết quả phiếu vào: {outfile}")
+    print(f"Đã lưu kết quả phiếu vào: {outfile}")
 
 except json.JSONDecodeError:
     pass

@@ -14,8 +14,10 @@ export const login = async (email: string, password: string, remember = false) =
 };
 
 export const getMe = async () => {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_BASE}/auth/me`, {
-    credentials: "include",                 // 👈 COOKIE
+    credentials: "include",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error((await res.json()).message || "Chưa đăng nhập");
   return await res.json();
@@ -62,10 +64,14 @@ export const getStats = async () => {
 /* ===========================
    🔹 UPLOAD ẢNH THẬT
    =========================== */
-export const uploadVoteFiles = async (sessionId: string, files: File[]) => {
+export const uploadVoteFiles = async (sessionId: string, files: File[], sessionType?: string) => {
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
-  const res = await fetch(`${API_BASE}/uploads/${sessionId}`, {
+  
+  // Map session type to voteType
+  const voteType = sessionType === "tin-nhiem" ? "trust" : "surplus";
+  
+  const res = await fetch(`${API_BASE}/uploads/${sessionId}?voteType=${voteType}`, {
     method: "POST",
     body: formData,
   });
@@ -108,3 +114,8 @@ export const deleteAllUploadedFiles = async (sessionId: string) => {
   if (!res.ok) throw new Error("Không thể xóa toàn bộ ảnh");
   return await res.json();
 };
+
+/* ===========================
+   🔹 AI PROCESSING
+   =========================== */
+export { aiApi } from "./api/aiApi";

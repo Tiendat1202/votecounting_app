@@ -1,8 +1,149 @@
 import { Request, Response } from "express";
 import { VoteService } from "../services/voteService";
 import { VoteRequest, ApiResponse } from "../types";
+import { AppDataSource } from "../config/database";
+import { Vote } from "../entities/Vote";
 
 export class VoteController {
+  /**
+   * GET /api/votes/session/:sessionId
+   * Lấy danh sách phiếu của một phiên
+   */
+  static async getSessionVotes(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+      const { status, ballotType, candidateName, page = "1", limit = "20" } =
+        req.query;
+
+      const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+      const filters = {
+        status: status as string | undefined,
+        ballotType: ballotType as string | undefined,
+        candidateName: candidateName as string | undefined,
+      };
+
+      const { votes, total } = await VoteService.getSessionVotes(
+        sessionId,
+        filters,
+        parseInt(limit as string),
+        offset
+      );
+
+      res.json({
+        votes,
+        total,
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        pages: Math.ceil(total / parseInt(limit as string)),
+      });
+    } catch (error) {
+      console.error("Lỗi tải phiếu:", error);
+      res.status(500).json({ error: "Failed to fetch votes" });
+    }
+  }
+
+  /**
+   * GET /api/votes/stats/:sessionId
+   * Lấy thống kê của một phiên
+   */
+  static async getSessionStats(req: Request, res: Response) {
+    try {
+      const { sessionId } = req.params;
+      const stats = await VoteService.getSessionStats(sessionId);
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Lỗi tải thống kê:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  }
+
+  /**
+   * GET /api/votes/:voteId
+   * Lấy chi tiết một phiếu
+   */
+  static async getVoteDetails(req: Request, res: Response) {
+    try {
+      const { voteId } = req.params;
+      const vote = await AppDataSource.getRepository(Vote).findOneBy({
+        id: voteId,
+      });
+
+      if (!vote) {
+        return res.status(404).json({ error: "Vote not found" });
+      }
+
+      res.json(vote);
+    } catch (error) {
+      console.error("Lỗi tải chi tiết phiếu:", error);
+      res.status(500).json({ error: "Failed to fetch vote details" });
+    }
+  }
+
+  /**
+   * GET /api/votes/:voteId/raw-data
+   * Lấy dữ liệu thô (JSON) từ AI
+   */
+  static async getVoteRawData(req: Request, res: Response) {
+    try {
+      const { voteId } = req.params;
+      const vote = await AppDataSource.getRepository(Vote).findOneBy({
+        id: voteId,
+      });
+
+      if (!vote) {
+        return res.status(404).json({ error: "Vote not found" });
+      }
+
+      let rawData = {};
+      if (vote.rawData) {
+        try {
+          rawData = JSON.parse(vote.rawData);
+        } catch {
+          rawData = { raw: vote.rawData };
+        }
+      }
+
+      res.json(rawData);
+    } catch (error) {
+      console.error("Lỗi tải dữ liệu thô:", error);
+      res.status(500).json({ error: "Failed to fetch vote raw data" });
+    }
+  }
+
+  /**
+   * PUT /api/votes/:voteId/validate
+   * Xác nhận phiếu (đánh dấu là hợp lệ/không hợp lệ)
+   */
+  static async validateVote(req: Request, res: Response) {
+    try {
+      const { voteId } = req.params;
+      const { isValid, notes } = req.body;
+
+      const updatedVote = await VoteService.validateVote(
+        voteId,
+        isValid,
+        notes
+      );
+
+      if (!updatedVote) {
+        return res.status(404).json({ error: "Vote not found" });
+      }
+
+      res.json({
+        success: true,
+        vote: updatedVote,
+      });
+    } catch (error) {
+      console.error("Lỗi xác nhận phiếu:", error);
+      res.status(500).json({ error: "Failed to validate vote" });
+    }
+  }
+
+  /**
+   * Các phương thức cũ để tương thích
+   */
   static async submitVote(req: Request, res: Response) {
     try {
       const { candidate, notes } = req.body as VoteRequest;
