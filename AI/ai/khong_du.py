@@ -1,9 +1,17 @@
-from together import Together
-import os, json
-import base64, mimetypes
-from dotenv import load_dotenv
-import hashlib
+# AI/ai/khong_du.py
+from __future__ import annotations
 
+import os
+import json
+import base64
+import mimetypes
+import time
+from typing import Any, Dict, Optional
+
+from dotenv import load_dotenv
+from together import Together
+
+<<<<<<< Updated upstream
 # ====== NẠP API KEY ======
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # /app
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -82,6 +90,12 @@ Cấu trúc JSON:
 """.strip()
 
 def file_to_data_uri(path: str) -> str:
+=======
+from ai.prompt.khong_du_prompt import build_khong_du_prompt
+
+
+def _file_to_data_uri(path: str) -> str:
+>>>>>>> Stashed changes
     mime, _ = mimetypes.guess_type(path)
     if not mime:
         mime = "image/jpeg"
@@ -89,38 +103,81 @@ def file_to_data_uri(path: str) -> str:
         b64 = base64.b64encode(f.read()).decode("ascii")
     return f"data:{mime};base64,{b64}"
 
-# ====== TẠO data_uri TỪ ẢNH LOCAL ======
-data_uri = file_to_data_uri(LOCAL_IMAGE_PATH)
 
-response = client.chat.completions.create(
-    model=MODEL_ID,
-    response_format={"type": "json_object"},
-    messages=[
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Phân tích lá phiếu trong ảnh và CHỈ trả JSON theo cấu trúc đã nêu."},
-                {"type": "image_url", "image_url": {"url": data_uri}}
-            ],
-        },
-    ],
-    temperature=0.0, 
-)
+def _load_api_key() -> str:
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_path = os.path.join(base_dir, ".env")
+    load_dotenv(dotenv_path=env_path)
 
-# ====== HẬU KIỂM & LƯU FILE ======
-try:
-    content = response.choices[0].message.content
+    key = os.getenv("TOGETHER_API_KEY")
+    if not key:
+        raise RuntimeError(f"Không tìm thấy TOGETHER_API_KEY trong {env_path}")
+    return key
+
+
+def process_khong_du(
+    image_path: str,
+    ballot_id: Optional[str] = None,
+    model_id: str = "Qwen/Qwen2.5-VL-72B-Instruct",
+    prompt_version: int = 1,
+    temperature: float = 0.0,
+) -> Dict[str, Any]:
+    """
+    Stage 1 - đọc RAW phiếu không dư.
+    KHÔNG kết luận VALID/INVALID.
+    """
+    return process_khong_du_raw(
+        image_path=image_path,
+        ballot_id=ballot_id,
+        model_id=model_id,
+        prompt_version=prompt_version,
+        temperature=temperature,
+    )
+
+
+def process_khong_du_raw(
+    image_path: str,
+    ballot_id: Optional[str] = None,
+    model_id: str = "Qwen/Qwen2.5-VL-72B-Instruct",
+    prompt_version: int = 1,
+    temperature: float = 0.0,
+) -> Dict[str, Any]:
+    api_key = _load_api_key()
+    client = Together(api_key=api_key)
+
+    system_prompt = build_khong_du_prompt(prompt_version)
+    data_uri = _file_to_data_uri(image_path)
+
+    t0 = time.time()
+    resp = client.chat.completions.create(
+        model=model_id,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Phân tích lá phiếu này và CHỈ trả JSON theo schema."},
+                    {"type": "image_url", "image_url": {"url": data_uri}},
+                ],
+            },
+        ],
+        temperature=temperature,
+    )
+    latency_ms = int((time.time() - t0) * 1000)
+
+    content = resp.choices[0].message.content
     data = json.loads(content)
 
-    stable_id = make_ballot_id(LOCAL_IMAGE_PATH)
-    if not data.get("ballot_id"):
-        data["ballot_id"] = stable_id
+    if ballot_id is not None and not data.get("ballot_id"):
+        data["ballot_id"] = ballot_id
 
-    # ====== ÉP LUẬT CỨNG VỀ VALID / INVALID ======
-    agree_total = sum(1 for r in data.get("ballot_details", []) if r.get("agree") is True)
-    disagree_total = sum(1 for r in data.get("ballot_details", []) if r.get("disagree") is True)
+    data.setdefault("ballot_details", [])
+    data.setdefault("extra_names", [])
+    data.setdefault("handwritten_marks", False)
+    data.setdefault("tampering_marks", False)
 
+<<<<<<< Updated upstream
     reasons = set(data.get("invalid_reasons", []))
 
     # nếu không có bất kỳ ô đồng ý nào => INVALID
@@ -153,3 +210,12 @@ try:
 
 except json.JSONDecodeError:
     print("Model không trả JSON hợp lệ.")
+=======
+    return {
+        "ok": True,
+        "latency_ms": latency_ms,
+        "model_id": model_id,
+        "prompt_version": prompt_version,
+        "raw": data,
+    }
+>>>>>>> Stashed changes

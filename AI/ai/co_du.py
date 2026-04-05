@@ -1,12 +1,18 @@
+# AI/ai/co_du.py
 from __future__ import annotations
 
-import os, json, base64, mimetypes, time
+import os
+import json
+import base64
+import mimetypes
+import time
 from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 from together import Together
 
-from ai.prompt.co_du_prompt import build_surplus_prompt
+from ai.prompt.co_du_prompt import build_co_du_prompt
+
 
 def _file_to_data_uri(path: str) -> str:
     mime, _ = mimetypes.guess_type(path)
@@ -18,8 +24,8 @@ def _file_to_data_uri(path: str) -> str:
 
 
 def _load_api_key() -> str:
-    # Load .env từ root dự án (BM_DOAN/.env)
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # BM_DOAN
+    # root project: votecounting_app/
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     env_path = os.path.join(base_dir, ".env")
     load_dotenv(dotenv_path=env_path)
 
@@ -29,7 +35,10 @@ def _load_api_key() -> str:
     return key
 
 
+<<<<<<< Updated upstream
 def process_surplus_raw(
+=======
+def process_co_du(
     image_path: str,
     ballot_id: Optional[str] = None,
     model_id: str = "Qwen/Qwen2.5-VL-72B-Instruct",
@@ -37,19 +46,32 @@ def process_surplus_raw(
     temperature: float = 0.0,
 ) -> Dict[str, Any]:
     """
-    Stage 1: Model chỉ đọc dữ liệu thô từ ảnh phiếu có số dư.
-    - Không kết luận VALID/INVALID
-    - Không áp luật N
-    Trả về dict parse từ JSON của model + metadata cơ bản.
+    Stage 1 - đọc RAW phiếu có dư.
+    KHÔNG kết luận VALID/INVALID.
     """
+    return process_co_du_raw(
+        image_path=image_path,
+        ballot_id=ballot_id,
+        model_id=model_id,
+        prompt_version=prompt_version,
+        temperature=temperature,
+    )
+
+
+def process_co_du_raw(
+>>>>>>> Stashed changes
+    image_path: str,
+    ballot_id: Optional[str] = None,
+    model_id: str = "Qwen/Qwen2.5-VL-72B-Instruct",
+    prompt_version: int = 1,
+    temperature: float = 0.0,
+) -> Dict[str, Any]:
     api_key = _load_api_key()
     client = Together(api_key=api_key)
 
-    system_prompt = build_surplus_prompt(prompt_version)
+    system_prompt = build_co_du_prompt(prompt_version)
     data_uri = _file_to_data_uri(image_path)
 
-    # Khuyến nghị: ép model trả JSON object (nếu model hỗ trợ)
-    # Nếu model nào không hỗ trợ, bạn có thể bỏ response_format và dùng parser phía backend.
     t0 = time.time()
     resp = client.chat.completions.create(
         model=model_id,
@@ -71,13 +93,13 @@ def process_surplus_raw(
     content = resp.choices[0].message.content
     data = json.loads(content)
 
-    # Gắn ballot_id nếu backend truyền vào mà model để null
     if ballot_id is not None and not data.get("ballot_id"):
         data["ballot_id"] = ballot_id
 
-    # Chuẩn hoá tối thiểu: đảm bảo field tồn tại
     data.setdefault("ballot_details", [])
     data.setdefault("extra_names", [])
+    data.setdefault("handwritten_marks", False)
+    data.setdefault("tampering_marks", False)
 
     return {
         "ok": True,
@@ -85,6 +107,4 @@ def process_surplus_raw(
         "model_id": model_id,
         "prompt_version": prompt_version,
         "raw": data,
-        # Nếu Together trả usage thì bạn có thể thêm:
-        # "usage": getattr(resp, "usage", None)
     }
