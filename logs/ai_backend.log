@@ -1,41 +1,77 @@
-/Users/lthyor3/4/votecounting_app/mock_ai_backend.py:35: DeprecationWarning: 
+/Users/lthyor3/newĐA/votecounting_app/ai_backend.py:81: DeprecationWarning: 
         on_event is deprecated, use lifespan event handlers instead.
 
         Read more about it in the
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
         
   @app.on_event("startup")
-INFO:     Started server process [52804]
+INFO:     Started server process [85700]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-✅ AI Backend started (Mock version)
-INFO:     127.0.0.1:54064 - "POST /api/process HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:54064 - "POST /api/batches HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54064 - "GET /api/batches/e66af1ca-990e-408a-803a-cf809423513a HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54064 - "GET /api/batches/e66af1ca-990e-408a-803a-cf809423513a/results HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54064 - "GET /api/batches/e66af1ca-990e-408a-803a-cf809423513a/results/e66af1ca-990e-408a-803a-cf809423513a-0.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54082 - "POST /api/process HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:54084 - "POST /api/batches HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54084 - "GET /api/batches/8db3f9b6-53a0-4dc1-b0ec-57c662c3525d HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54084 - "GET /api/batches/8db3f9b6-53a0-4dc1-b0ec-57c662c3525d/results HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54084 - "GET /api/batches/8db3f9b6-53a0-4dc1-b0ec-57c662c3525d/results/8db3f9b6-53a0-4dc1-b0ec-57c662c3525d-0.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54092 - "POST /api/process HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:54094 - "POST /api/batches HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54094 - "GET /api/batches/8caf0aba-e5b5-4df9-a329-1a14f0736957 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54094 - "GET /api/batches/8caf0aba-e5b5-4df9-a329-1a14f0736957/results HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54094 - "GET /api/batches/8caf0aba-e5b5-4df9-a329-1a14f0736957/results/8caf0aba-e5b5-4df9-a329-1a14f0736957-0.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54141 - "POST /api/process HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:54141 - "POST /api/batches HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54141 - "GET /api/batches/31b692f6-6684-4b42-8a41-33e130353c65 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54141 - "GET /api/batches/31b692f6-6684-4b42-8a41-33e130353c65/results HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54141 - "GET /api/batches/31b692f6-6684-4b42-8a41-33e130353c65/results/31b692f6-6684-4b42-8a41-33e130353c65-0.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54160 - "POST /api/process HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:54160 - "POST /api/batches HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54160 - "GET /api/batches/29220bf8-cab2-4211-8a41-4aac648daf15 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54160 - "GET /api/batches/29220bf8-cab2-4211-8a41-4aac648daf15/results HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54160 - "GET /api/batches/29220bf8-cab2-4211-8a41-4aac648daf15/results/29220bf8-cab2-4211-8a41-4aac648daf15-0.json HTTP/1.1" 200 OK
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [52804]
+AI Backend started (Processor: qwen)
+   Using QWEN processor (real AI)
+INFO:     127.0.0.1:54575 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54603 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54885 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55015 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55024 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55015 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55024 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55035 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55015 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55035 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55060 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55015 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55060 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55075 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55015 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55060 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55075 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55060 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55106 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55075 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55060 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55106 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55075 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55060 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55106 - "POST /api/process HTTP/1.1" 200 OK

@@ -1,16 +1,19 @@
 
 > frontend@0.0.0 dev
-> vite
+> vite --host 0.0.0.0 --port 5173
 
 
-  VITE v7.1.5  ready in 748 ms
+  VITE v7.1.5  ready in 439 ms
 
   ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
+  ➜  Network: http://10.10.1.12:5173/
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
-8:14:54 AM [vite] (client) hmr update /src/context/AuthContext.tsx, /src/pages/admin/Dashboard.tsx, /src/pages/admin/Sessions.tsx, /src/pages/admin/CreateSession.tsx, /src/pages/admin/UploadVotes.tsx, /src/components/BallotProcessor.tsx
-8:14:54 AM [vite] (client) hmr update /src/context/AuthContext.tsx, /src/pages/admin/Dashboard.tsx, /src/pages/admin/Sessions.tsx, /src/pages/admin/CreateSession.tsx, /src/pages/admin/UploadVotes.tsx
-8:14:54 AM [vite] (client) hmr update /src/pages/admin/UploadVotes.tsx
-8:14:55 AM [vite] (client) hmr update /src/pages/admin/UploadVotes.tsx
-8:14:55 AM [vite] (client) hmr invalidate /src/context/AuthContext.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
-8:14:55 AM [vite] (client) hmr update /src/App.tsx, /src/components/Navbar.tsx, /src/pages/Login.tsx
+10:31:05 PM [vite] (client) hmr update /src/pages/Results.tsx
+10:31:18 PM [vite] (client) hmr update /src/pages/Results.tsx
+10:31:27 PM [vite] (client) hmr update /src/pages/Results.tsx
+11:01:00 PM [vite] (client) hmr update /src/pages/Results.tsx
+11:05:13 PM [vite] (client) hmr update /src/context/AuthContext.tsx
+11:05:13 PM [vite] (client) hmr invalidate /src/context/AuthContext.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:05:13 PM [vite] (client) hmr update /src/App.tsx, /src/components/Navbar.tsx, /src/pages/Login.tsx
+11:05:23 PM [vite] (client) hmr update /src/pages/Results.tsx
+11:16:20 PM [vite] (client) hmr update /src/pages/admin/CreateSession.tsx
