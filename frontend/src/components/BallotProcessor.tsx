@@ -58,7 +58,7 @@ export const BallotProcessor: React.FC<BallotProcessorProps> = ({
       }, 500);
 
       // Process ballot
-      const aiResult = await aiApi.processBallot(file, ballotType, sessionId);
+      const aiResult = await aiApi.processVoteImage(file, ballotType, sessionId);
 
       clearInterval(progressInterval);
       setProgress(100);
@@ -69,7 +69,7 @@ export const BallotProcessor: React.FC<BallotProcessorProps> = ({
         setResult(aiResult);
         onUploadComplete?.(aiResult);
       } else {
-        const errorMsg = aiResult.result.error || "Unknown AI error";
+        const errorMsg = aiResult.result?.error || "Unknown AI error";
         setError(errorMsg);
         onError?.(errorMsg);
       }
@@ -172,7 +172,7 @@ export const BallotProcessor: React.FC<BallotProcessorProps> = ({
         <div className="result-display">
           <div className="result-header">
             <p className="result-title">✓ Xử lý thành công</p>
-            <p className="result-time">{result.result.latency_ms}ms</p>
+            <p className="result-time">{result.result?.latency_ms ?? 0}ms</p>
           </div>
 
           <div className="result-content">
@@ -197,8 +197,8 @@ export const BallotProcessor: React.FC<BallotProcessorProps> = ({
                   ) : (
                     <p>Không thể xác định ứng cử viên</p>
                   )}
-                  <p className="meta">Batch: {result.batchId}</p>
-                  <p className="meta">Job: {result.jobId}</p>
+                  {result.batchId && <p className="meta">Batch: {result.batchId}</p>}
+                  {result.jobId && <p className="meta">Job: {result.jobId}</p>}
                 </div>
               </div>
             )}

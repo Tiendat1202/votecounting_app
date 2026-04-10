@@ -5,8 +5,8 @@ const API_BASE = "http://localhost:5050/api/ai";
 
 interface AIProcessResult {
   success: boolean;
-  batchId: string;
-  jobId: string;
+  batchId?: string;
+  jobId?: string;
   result: {
     ok: boolean;
     error: string | null;
@@ -43,20 +43,20 @@ class AIApi {
   }
 
   /**
-   * Process single ballot image
+   * Process single vote image
    * @param file Image file to process
-   * @param ballotType "trust" or "surplus"
+   * @param voteType "trust" or "surplus"
    * @param sessionId Session ID for storing results
    */
-  async processBallot(
+  async processVoteImage(
     file: File,
-    ballotType: "trust" | "surplus",
+    voteType: "trust" | "surplus",
     sessionId?: string
   ): Promise<AIProcessResult> {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("ballotType", ballotType);
+      formData.append("voteType", voteType);
       if (sessionId) {
         formData.append("sessionId", sessionId);
       }
@@ -73,7 +73,7 @@ class AIApi {
 
       return data;
     } catch (error) {
-      console.error("Error processing ballot:", error);
+      console.error("Error processing vote image:", error);
       throw error;
     }
   }

@@ -154,23 +154,49 @@ def process_ballot_qwen(file_bytes: bytes, filename: str, ballot_type: str, batc
             system_prompt = f"""Phân tích phiếu bầu {ballot_type} và trả về JSON với:
 ballot_id, validity (VALID/INVALID), invalid_reasons, ballot_details."""
         
-        # Call Together AI (using Qwen3-VL-32B which is available)
-        response = client.chat.completions.create(
-            model="Qwen/Qwen3-VL-32B-Instruct",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": f"Phân tích lá phiếu {ballot_type} này và CHỈ trả JSON."},
-                        {"type": "image_url", "image_url": {"url": data_uri}}
-                    ]
-                }
-            ],
-            temperature=0.0,
-            max_tokens=2000
-        )
+        # Call Together AI (fallback across available vision models)
+        preferred = os.getenv("TOGETHER_MODEL")
+        model_candidates = [
+            preferred,
+            "Qwen/Qwen3-VL-8B-Instruct",
+            "Qwen/Qwen2-VL-72B-Instruct",
+            "Qwen/Qwen2.5-VL-72B-Instruct",
+            "Qwen/Qwen3-VL-32B-Instruct",
+        ]
+        model_candidates = [m for i, m in enumerate(model_candidates) if m and m not in model_candidates[:i]]
+
+        response = None
+        used_model = None
+        last_err = None
+        for model_name in model_candidates:
+            try:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": f"Phân tích lá phiếu {ballot_type} này và CHỈ trả JSON."},
+                                {"type": "image_url", "image_url": {"url": data_uri}}
+                            ]
+                        }
+                    ],
+                    temperature=0.0,
+                    max_tokens=2000
+                )
+                used_model = model_name
+                break
+            except Exception as e:
+                last_err = e
+                msg = str(e)
+                if "model_not_available" in msg or "Unable to access non-serverless model" in msg:
+                    continue
+                raise
+
+        if response is None:
+            raise last_err if last_err else RuntimeError("No Together model available")
         
         # Parse response
         result_text = response.choices[0].message.content.strip()
@@ -208,6 +234,7 @@ ballot_id, validity (VALID/INVALID), invalid_reasons, ballot_details."""
             "ballot_id": job_id,
             "ballot_type": ballot_type,
             "processor": "qwen",
+            "model": used_model,
             "status": "success",
             "error_message": None,
             "full_analysis": result_json

@@ -11,6 +11,8 @@ interface Session {
   startAt?: string;
   endAt?: string;
   candidates?: string[];
+  seats?: number;
+  minWinPercent?: number;
 }
 
 export const VoteCountingSession: React.FC = () => {
@@ -52,6 +54,7 @@ export const VoteCountingSession: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        // legacy screen: auto-fill new election rule fields
         body: JSON.stringify({
           name: formData.name,
           type: formData.type,
@@ -60,7 +63,12 @@ export const VoteCountingSession: React.FC = () => {
             .map((c) => c.trim())
             .filter((c) => c),
           startAt: new Date().toISOString(),
-          endAt: null,
+          endAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          seats: formData.candidates
+            .split(",")
+            .map((c) => c.trim())
+            .filter((c) => c).length || 1,
+          minWinPercent: 0,
         }),
       });
 

@@ -14,6 +14,12 @@ export class VoteSession {
   @Column("simple-array")
   candidates: string[];
 
+  @Column({ type: "int", default: 0 })
+  seats: number; // số lượng cần bầu
+
+  @Column({ type: "float", default: 50 })
+  minWinPercent: number; // % tối thiểu để trúng cử (ứng viên phải > giá trị này)
+
   @Column()
   startAt: string;
 

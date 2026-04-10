@@ -8,6 +8,8 @@ const CreateSession: React.FC = () => {
   const [sessionName, setSessionName] = useState("");
   const [voteType, setVoteType] = useState("tin-nhiem");
   const [candidates, setCandidates] = useState<string[]>([]);
+  const [seatsInput, setSeatsInput] = useState<string>("1");
+  const [minWinPercent, setMinWinPercent] = useState<number>(0);
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -40,6 +42,20 @@ const CreateSession: React.FC = () => {
 
     const validCandidates = candidates.map((c) => c.trim()).filter(Boolean);
     if (validCandidates.length === 0) return alert("Vui lòng nhập ít nhất một ứng viên!"), false;
+
+    const seats = Math.floor(Number(seatsInput));
+
+    if (!Number.isFinite(seats) || seats <= 0) {
+      return alert("Số lượng cần bầu phải lớn hơn 0!"), false;
+    }
+
+    if (seats > validCandidates.length) {
+      return alert("Số lượng cần bầu không được lớn hơn số ứng cử viên!"), false;
+    }
+
+    if (!Number.isFinite(minWinPercent) || minWinPercent < 0 || minWinPercent > 100) {
+      return alert("% tối thiểu để trúng cử phải trong khoảng 0-100!"), false;
+    }
     return true;
   };
 
@@ -52,6 +68,8 @@ const CreateSession: React.FC = () => {
       name: sessionName.trim(),
       type: voteType,
       candidates: candidates.map((c) => c.trim()).filter(Boolean),
+      seats: Math.floor(Number(seatsInput)),
+      minWinPercent,
       startAt,
       endAt,
     };
@@ -161,6 +179,41 @@ const CreateSession: React.FC = () => {
                 </label>
                 <input className="input" type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} min={startAt || undefined} />
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>
+                Số lượng cần bầu <span className="required">*</span>
+              </label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                step={1}
+                value={seatsInput}
+                onChange={(e) => setSeatsInput(e.target.value)}
+                onBlur={() => {
+                  const n = Math.floor(Number(seatsInput));
+                  setSeatsInput(String(Number.isFinite(n) && n > 0 ? n : 1));
+                }}
+                placeholder="Ví dụ: 15"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>
+                % tối thiểu để trúng cử <span className="required">*</span>
+              </label>
+              <input
+                className="input"
+                type="number"
+                min={0}
+                max={100}
+                step={0.01}
+                value={minWinPercent}
+                onChange={(e) => setMinWinPercent(Math.max(0, Number(e.target.value || 0)))}
+                placeholder="Ví dụ: 0 hoặc 50"
+              />
             </div>
 
             <div className="form-group col-span-2">

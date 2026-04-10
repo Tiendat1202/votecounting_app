@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getMe, login as apiLogin, logoutApi } from "../api";
 
+const AUTH_VERIFY_TIMEOUT_MS = 8000;
+
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("Auth verification timeout")), ms)
+    ),
+  ]);
+}
+
 type User = {
   userId: string;
   email: string;
@@ -41,12 +52,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(parsedUser);
             
             // Verify token với server
-            await getMe();
-          } catch (err) {
-            // Token invalid, clear
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            setUser(null);
+            await withTimeout(getMe(), AUTH_VERIFY_TIMEOUT_MS);
+          } catch (err: any) {
+            const msg = String(err?.message || "").toLowerCase();
+
+            // Chỉ clear khi thực sự là lỗi xác thực
+            const isAuthError =
+              msg.includes("invalid") ||
+              msg.includes("expired") ||
+              msg.includes("unauthorized") ||
+              msg.includes("no token") ||
+              msg.includes("chưa đăng nhập");
+
+            if (isAuthError) {
+              localStorage.removeItem("token");
+              localStorage.removeItem("user");
+              setUser(null);
+            } else {
+              // Lỗi mạng/timeout: giữ phiên local để tránh mất token không cần thiết
+              console.warn("Auth verify skipped due to transient error:", err?.message || err);
+            }
           }
         } else {
           setUser(null);

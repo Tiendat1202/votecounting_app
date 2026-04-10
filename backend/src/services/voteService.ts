@@ -15,6 +15,15 @@ export class VoteService {
     aiResult: any,
     imageUrl?: string
   ): Promise<Vote> {
+    const validation = this.extractValidation(aiResult);
+
+    const mappedStatus: "pending" | "valid" | "invalid" | "duplicate" =
+      validation?.validity === "VALID"
+        ? "valid"
+        : validation?.validity === "INVALID"
+        ? "invalid"
+        : "pending";
+
     // Trích xuất ứng cử viên từ kết quả AI
     const selectedCandidate = this.extractSelectedCandidate(aiResult);
     const confidenceScore = this.calculateConfidence(aiResult);
@@ -26,7 +35,11 @@ export class VoteService {
       rawData: JSON.stringify(aiResult),
       selectedCandidate: selectedCandidate || undefined,
       confidenceScore,
-      status: "pending" as const, // Chờ xác nhận
+      status: mappedStatus,
+      validity: validation?.validity || "UNKNOWN",
+      invalidReasons: JSON.stringify(validation?.invalid_reasons || []),
+      agreeCount: validation?.agree_count || 0,
+      doubleMarkCount: validation?.double_mark_count || 0,
       imageUrl: imageUrl || undefined,
       candidate: selectedCandidate || "unknown",
       notes: `AI kết quả: ${aiResult?.error || "OK"}`,
@@ -34,6 +47,109 @@ export class VoteService {
 
     const vote = voteRepository.create(voteData as any);
     return (await voteRepository.save(vote as any)) as Vote;
+  }
+
+  static extractValidation(aiResult: any): any | null {
+    if (!aiResult) return null;
+
+    // New format from ai_backend.py
+    if (aiResult.validation && typeof aiResult.validation === "object") {
+      return aiResult.validation;
+    }
+
+    // Fallback: validation embedded in parsed.full_analysis
+    const full = aiResult?.parsed?.full_analysis;
+    if (full && (full.validity || full.invalid_reasons)) {
+      return {
+        validity: full.validity || "UNKNOWN",
+        invalid_reasons: full.invalid_reasons || [],
+        agree_count: full.agree_count || 0,
+        double_mark_count: full.double_mark_count || 0,
+      };
+    }
+
+    return null;
+  }
+
+  static async backfillValidationStatus(): Promise<number> {
+    const votes = await voteRepository.find();
+    let updated = 0;
+
+    for (const vote of votes) {
+      if (!vote.rawData) continue;
+
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(vote.rawData);
+      } catch {
+        continue;
+      }
+
+      const fullAnalysis = parsed?.parsed?.full_analysis || parsed?.full_analysis;
+      let validation: any | null = null;
+
+      if (fullAnalysis && typeof fullAnalysis === "object") {
+        validation = {
+          validity: fullAnalysis.validity || "UNKNOWN",
+          invalid_reasons: fullAnalysis.invalid_reasons || [],
+          agree_count: fullAnalysis.agree_count || 0,
+          double_mark_count: fullAnalysis.double_mark_count || 0,
+        };
+
+        // Fallback for older payloads that expose raw row data without counts
+        if (!validation.invalid_reasons.length && Array.isArray(fullAnalysis.vote_details)) {
+          const validRows = fullAnalysis.vote_details.filter((detail: any) => {
+            if (vote.voteType === "trust") {
+              return detail.agree === true && detail.row_status === "OK";
+            }
+            return detail.selected === true && detail.row_status === "OK";
+          });
+
+          if (vote.voteType === "trust") {
+            validation.agree_count = validRows.length;
+            validation.validity = validRows.length > 0 ? "VALID" : "INVALID";
+            validation.invalid_reasons = validRows.length > 0 ? [] : ["NO_BALLOT_DETAILS"];
+          }
+        }
+      }
+
+      if (!validation) {
+        validation = this.extractValidation(parsed);
+      }
+      if (!validation) continue;
+
+      const nextValidity = validation?.validity || "UNKNOWN";
+      const nextStatus: "pending" | "valid" | "invalid" | "duplicate" =
+        nextValidity === "VALID"
+          ? "valid"
+          : nextValidity === "INVALID"
+          ? "invalid"
+          : "pending";
+
+      const nextReasons = JSON.stringify(validation?.invalid_reasons || []);
+      const nextAgreeCount = validation?.agree_count || 0;
+      const nextDoubleMarkCount = validation?.double_mark_count || 0;
+
+      const changed =
+        vote.status !== nextStatus ||
+        vote.validity !== nextValidity ||
+        (vote.invalidReasons || "[]") !== nextReasons ||
+        (vote.agreeCount || 0) !== nextAgreeCount ||
+        (vote.doubleMarkCount || 0) !== nextDoubleMarkCount;
+
+      if (!changed) continue;
+
+      vote.status = nextStatus;
+      vote.validity = nextValidity as any;
+      vote.invalidReasons = nextReasons;
+      vote.agreeCount = nextAgreeCount;
+      vote.doubleMarkCount = nextDoubleMarkCount;
+
+      await voteRepository.save(vote as any);
+      updated++;
+    }
+
+    return updated;
   }
 
   /**
@@ -112,15 +228,39 @@ export class VoteService {
   static async validateVote(
     voteId: string,
     isValid: boolean,
-    notes?: string
+    options?: {
+      notes?: string;
+      overrideReason?: string;
+      overrideBy?: string;
+      selectedCandidates?: string[];
+    }
   ): Promise<Vote | null> {
     const vote = await voteRepository.findOneBy({ id: voteId });
     if (!vote) return null;
 
     vote.status = isValid ? ("valid" as const) : ("invalid" as const);
-    if (notes) {
-      vote.validationNotes = notes;
+    vote.validity = isValid ? ("VALID" as any) : ("INVALID" as any);
+    if (isValid) {
+      vote.invalidReasons = JSON.stringify([]);
+      if (Array.isArray(options?.selectedCandidates) && options!.selectedCandidates.length > 0) {
+        const normalized = options!.selectedCandidates
+          .map((x) => String(x).trim())
+          .filter(Boolean);
+        if (normalized.length > 0) {
+          const merged = normalized.join(", ");
+          vote.selectedCandidate = merged;
+          vote.candidate = merged;
+        }
+      }
+    } else {
+      const reason = options?.overrideReason || "MANUAL_OVERRIDE_INVALID";
+      vote.invalidReasons = JSON.stringify([reason]);
     }
+
+    vote.validationNotes = options?.notes?.trim() || "";
+    vote.manualOverrideReason = options?.overrideReason || (isValid ? "MANUAL_CONFIRM" : "MANUAL_OVERRIDE_INVALID");
+    vote.manualOverrideBy = options?.overrideBy || "unknown";
+    vote.manualOverrideAt = new Date();
 
     return (await voteRepository.save(vote as any)) as Vote;
   }

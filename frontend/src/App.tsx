@@ -22,7 +22,9 @@ import { VoteCountingSession } from "./pages/VoteCountingSession";
 import { useAuth } from "./context/AuthContext";
 function RequireAuth({ role }: { role?: "admin" | "user" }) {
   const { user, loading } = useAuth();
-  if (loading) return null; // hoặc spinner
+  if (loading) {
+    return <div style={{ padding: 24 }}>Đang kiểm tra đăng nhập...</div>;
+  }
   if (!user) return <Navigate to="/login" replace />;
   if (role && user.role !== role) return <Navigate to="/" replace />;
   return <Outlet />;

@@ -53,8 +53,24 @@ const upload = multer({
 });
 
 // Middleware
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+]);
+
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow predefined origins and any localhost/127.0.0.1 port used by Vite
+    const isLocalDevOrigin = /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+    if (allowedOrigins.has(origin) || isLocalDevOrigin) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -64,8 +80,16 @@ app.use("/uploads", express.static(uploadsDir));
 
 // Initialize Database
 AppDataSource.initialize()
-  .then(() => {
+  .then(async () => {
     console.log("Database connection established");
+    try {
+      const updated = await VoteService.backfillValidationStatus();
+      if (updated > 0) {
+        console.log(`Backfilled validation status for ${updated} votes`);
+      }
+    } catch (err) {
+      console.error("Failed to backfill validation status:", err);
+    }
   })
   .catch((error) => {
     console.error("Database connection failed:", error);
@@ -103,7 +127,34 @@ app.get("/api/sessions", async (req: Request, res: Response) => {
 
 app.post("/api/sessions", async (req: Request, res: Response) => {
   try {
-    const { name, type, startAt, endAt, candidates } = req.body;
+    const { name, type, startAt, endAt, candidates, seats, minWinPercent } = req.body;
+
+    const candidateList = Array.isArray(candidates)
+      ? candidates.map((c: any) => String(c).trim()).filter(Boolean)
+      : [];
+
+    const parsedSeats = Number(seats);
+    const parsedMinPercent = Number(minWinPercent);
+
+    if (!name || !type || !startAt || !endAt) {
+      return res.status(400).json({ error: "Thiếu thông tin bắt buộc khi tạo phiên" });
+    }
+
+    if (candidateList.length === 0) {
+      return res.status(400).json({ error: "Cần ít nhất 1 ứng cử viên" });
+    }
+
+    if (!Number.isFinite(parsedSeats) || parsedSeats <= 0) {
+      return res.status(400).json({ error: "Số lượng cần bầu phải lớn hơn 0" });
+    }
+
+    if (parsedSeats > candidateList.length) {
+      return res.status(400).json({ error: "Số lượng cần bầu không được lớn hơn số ứng cử viên" });
+    }
+
+    if (!Number.isFinite(parsedMinPercent) || parsedMinPercent < 0 || parsedMinPercent > 100) {
+      return res.status(400).json({ error: "% tối thiểu để trúng cử phải trong khoảng 0-100" });
+    }
     
     const sessionRepo = AppDataSource.getRepository(VoteSession);
     const newSession = sessionRepo.create({
@@ -112,7 +163,9 @@ app.post("/api/sessions", async (req: Request, res: Response) => {
       type,
       startAt,
       endAt,
-      candidates
+      candidates: candidateList,
+      seats: Math.floor(parsedSeats),
+      minWinPercent: parsedMinPercent,
     });
     
     await sessionRepo.save(newSession);

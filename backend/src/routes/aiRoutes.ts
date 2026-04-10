@@ -5,6 +5,7 @@ import fs from "fs";
 import { authenticateJWT } from "../middleware/auth";
 import aiService from "../services/aiService";
 import { VoteService } from "../services/voteService";
+import { AIResultFile } from "../types";
 
 const router = Router();
 
@@ -103,9 +104,31 @@ router.post(
         sessionId,
         voteId,
         ballotType as "trust" | "surplus",
-        aiResult,
+        aiResult as any,
         req.file.originalname
       );
+
+      // Extract validation result from aiResult if available
+      const validation = (aiResult as any).validation || null;
+
+      // Update vote with validation data if available
+      if (validation) {
+        vote.validity = validation.validity;
+        vote.invalidReasons = JSON.stringify(validation.invalid_reasons || []);
+        vote.agreeCount = validation.agree_count || 0;
+        vote.doubleMarkCount = validation.double_mark_count || 0;
+        
+        // Update status based on validity
+        if (validation.validity === "VALID") {
+          vote.status = "valid";
+        } else if (validation.validity === "INVALID") {
+          vote.status = "invalid";
+        }
+        
+        const { Vote } = await import("../entities/Vote");
+        const voteRepo = AppDataSource.getRepository(Vote);
+        await voteRepo.save(vote);
+      }
 
       // Trả về kết quả
       return res.json({
@@ -118,11 +141,15 @@ router.post(
           selectedCandidate: vote.selectedCandidate,
           confidenceScore: vote.confidenceScore,
           status: vote.status,
+          validity: vote.validity,
+          invalidReasons: vote.invalidReasons ? JSON.parse(vote.invalidReasons) : [],
+          agreeCount: vote.agreeCount,
         },
         result: {
           ok: aiResult.ok,
           error: aiResult.error,
           parsed: aiResult.parsed,
+          validation: validation,
           latency_ms: aiResult.latency_ms,
           usage: aiResult.usage,
         },

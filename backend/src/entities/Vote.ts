@@ -46,8 +46,30 @@ export class Vote {
   @Column({ type: "text", nullable: true })
   validationNotes: string; // Ghi chú từ kiểm tra
 
+  @Column({ type: "varchar", length: 120, nullable: true })
+  manualOverrideReason: string; // Lý do override thủ công
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  manualOverrideBy: string; // Email/UserId người duyệt tay
+
+  @Column({ type: "datetime", nullable: true })
+  manualOverrideAt: Date; // Thời gian duyệt tay gần nhất
+
   @Column({ type: "varchar", length: 255, nullable: true })
   imageUrl: string; // URL ảnh gốc
+
+  // VALIDATION FIELDS (NEW)
+  @Column({ type: "varchar", length: 50, nullable: true, default: "UNKNOWN" })
+  validity: "VALID" | "INVALID" | "UNKNOWN" | "ERROR"; // Kết quả validation
+
+  @Column({ type: "text", nullable: true })
+  invalidReasons: string; // JSON array of reasons ["NO_SELECTION", "OVER_SEATS", etc]
+
+  @Column({ type: "int", nullable: true, default: 0 })
+  agreeCount: number; // Số lượng đồng ý
+
+  @Column({ type: "int", nullable: true, default: 0 })
+  doubleMarkCount: number; // Số lượng dấu kép (cho phiếu không có số dư)
 
   // Thời gian
   @CreateDateColumn()

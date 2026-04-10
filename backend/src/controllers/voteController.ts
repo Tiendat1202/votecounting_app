@@ -119,12 +119,58 @@ export class VoteController {
   static async validateVote(req: Request, res: Response) {
     try {
       const { voteId } = req.params;
-      const { isValid, notes } = req.body;
+      const { isValid, notes, overrideReason, selectedCandidates } = req.body;
+      const payloadUser = (req as any).user || {};
+      const actor = payloadUser.email || payloadUser.userId || "unknown";
+
+      const parsedIsValid =
+        isValid === true ||
+        isValid === "true" ||
+        isValid === 1 ||
+        isValid === "1";
+
+      const voteRepo = AppDataSource.getRepository(Vote);
+      const existingVote = await voteRepo.findOne({ where: { id: voteId }, relations: ["session"] });
+      if (!existingVote) {
+        return res.status(404).json({ error: "Vote not found" });
+      }
+
+      const currentIsInvalid =
+        existingVote.validity === "INVALID" ||
+        existingVote.status === "invalid";
+
+      const currentIsValid =
+        existingVote.validity === "VALID" ||
+        existingVote.status === "valid";
+
+      const normalizedCandidates = Array.isArray(selectedCandidates)
+        ? selectedCandidates.map((x: any) => String(x).trim()).filter(Boolean)
+        : [];
+
+      if (parsedIsValid && currentIsInvalid) {
+        if (!overrideReason || String(overrideReason).trim() === "") {
+          return res.status(400).json({ error: "overrideReason is required when overriding invalid to valid" });
+        }
+        if (normalizedCandidates.length === 0) {
+          return res.status(400).json({ error: "selectedCandidates is required when overriding invalid to valid" });
+        }
+      }
+
+      if (!parsedIsValid && currentIsValid) {
+        if (!overrideReason || String(overrideReason).trim() === "") {
+          return res.status(400).json({ error: "overrideReason is required when overriding valid to invalid" });
+        }
+      }
 
       const updatedVote = await VoteService.validateVote(
         voteId,
-        isValid,
-        notes
+        parsedIsValid,
+        {
+          notes,
+          overrideReason,
+          overrideBy: actor,
+          selectedCandidates: normalizedCandidates,
+        }
       );
 
       if (!updatedVote) {

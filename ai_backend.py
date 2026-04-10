@@ -10,11 +10,20 @@ from typing import List, Optional
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+# Load env vars (prefer root .env, then AI/backend and AI/app env files)
+ROOT_DIR = os.path.dirname(__file__)
+load_dotenv(os.path.join(ROOT_DIR, ".env"), override=False)
+load_dotenv(os.path.join(ROOT_DIR, "AI", "backend", ".env"), override=False)
+load_dotenv(os.path.join(ROOT_DIR, "AI", "app", ".env"), override=False)
 
 # Add AI/backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'AI'))
 
 from backend.ballot_processor import process_ballot
+from backend.validator_co_du import validate_co_du
+from backend.validator_khong_du import validate_khong_du
 
 app = FastAPI(title="Vote Counting AI Backend")
 
@@ -152,9 +161,10 @@ async def create_batch(
 @app.post("/api/process")
 async def process_single_ballot(
     ballot_type: str = Form(...),
+    seats_n: int = Form(1),
     files: List[UploadFile] = File(...)
 ):
-    """Process a single ballot synchronously"""
+    """Process a single ballot synchronously WITH VALIDATION"""
     if not files or len(files) == 0:
         return JSONResponse(
             {"error": "No files uploaded"},
@@ -166,7 +176,32 @@ async def process_single_ballot(
     filename = file.filename or "ballot"
     
     try:
+        # Step 1: Process ballot (OCR)
         parsed_result = process_ballot_wrapper(content, filename, ballot_type, 0)
+        
+        # Step 2: Validate ballot
+        validation_result = None
+        try:
+            if parsed_result.get("status") == "error":
+                validation_result = {
+                    "validity": "INVALID",
+                    "invalid_reasons": ["AI_PROCESSING_ERROR"],
+                    "error_message": parsed_result.get("error_message")
+                }
+            elif ballot_type == "surplus" or ballot_type == "co_du":
+                validation_result = validate_co_du(parsed_result)
+            elif ballot_type == "trust" or ballot_type == "khong_du":
+                validation_result = validate_khong_du(parsed_result)
+            else:
+                validation_result = {
+                    "validity": "UNKNOWN",
+                    "invalid_reasons": ["Unknown ballot type"]
+                }
+        except Exception as ve:
+            validation_result = {
+                "validity": "ERROR",
+                "invalid_reasons": [f"Validation error: {str(ve)}"]
+            }
         
         return {
             "batch_id": "sync",
@@ -178,6 +213,7 @@ async def process_single_ballot(
             "latency_ms": 1000,
             "usage": {},
             "parsed": parsed_result,
+            "validation": validation_result,
             "processor": AI_PROCESSOR
         }
     except Exception as e:
@@ -192,6 +228,7 @@ async def process_single_ballot(
                 "latency_ms": 0,
                 "usage": {},
                 "parsed": None,
+                "validation": None,
                 "processor": AI_PROCESSOR
             },
             status_code=500

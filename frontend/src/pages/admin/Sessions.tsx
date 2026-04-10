@@ -8,6 +8,8 @@ type Session = {
   name: string;
   type: string;
   candidates: string[];
+  seats?: number;
+  minWinPercent?: number;
   startAt?: string;
   endAt?: string;
 };
