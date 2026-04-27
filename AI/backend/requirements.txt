@@ -1,0 +1,25 @@
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+redis
+rq
+requests
+together
+pillow
+
+# Optional AI processors (install as needed)
+# OpenAI Vision API
+# openai>=1.0.0
+
+# Google Cloud Vision API
+# google-cloud-vision>=3.4.0
+
+# Local Tesseract OCR
+# pytesseract>=0.3.10
+# pillow>=10.0.0
+
+# Custom ML Models
+# torch>=2.0.0
+# torchvision>=0.15.0
+# opencv-python>=4.8.0
