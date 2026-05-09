@@ -1,0 +1,25 @@
+
+> votecounting-backend@1.0.0 dev
+> ts-node src/index.ts
+
+📁 Loading env from: /Users/lthyor3/Downloads/votecounting_app/backend/.env
+Server running on http://localhost:5050
+Database connection established
+✅ Email service configured (gmail)
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "NGUYEN VUON TRUNG NAM"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "BUI XUAN BACH. Agree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "LE THANH BACH. Agree: Empty. Disagree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "TRAN NGOC BAO DUY. Agree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "DANG TIEN DAT. Agree: Empty. Disagree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "LE BINH DANG. Agree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "LE ANH KHOA. Agree: Empty. Disagree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "BUI QUE LAM. Agree: Empty. Disagree: Empty. Status: EMPTY"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "BUI HUU LOI. Agree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "TRAN VAN MANH. Agree: Empty. Disagree: Empty. Status: EMPTY"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "LAM BAO MINH. Agree: Empty. Disagree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "DUONG HO NAM. Agree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "NGUYEN VUONG TRUNG NAM. Agree: Empty. Disagree: Empty. Status: EMPTY"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "TRAN TRUNG NHUT. Agree: Empty. Disagree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "LE THI THU THUY. Agree: X"
+[summary] Bỏ qua tên không có trong danh sách ứng viên: "DO HOANG TIEN. Agree: Empty. Disagree: Empty. Status: EMPTY"
+[summary] session=1778355748177 type=trust total=10 valid=4 invalid=1 failed=5

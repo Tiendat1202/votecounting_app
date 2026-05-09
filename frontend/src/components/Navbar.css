@@ -1,0 +1,127 @@
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e5e7eb;
+  --accent: #0f62fe;
+  --accent-fg: #ffffff;
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: linear-gradient(90deg, #0f62fe, #1d4ed8);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(15, 98, 254, 0.18);
+  font-family: var(--font-sans);
+}
+
+.navbar .nav-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo a {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+
+.menu {
+  display: flex;
+  list-style: none;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.menu a {
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 999px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.menu a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.auth {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-login,
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.05s ease, opacity 0.2s ease;
+  border: none;
+}
+
+.btn-login {
+  background: #ffffff;
+  color: #1d4ed8;
+}
+
+.btn-login:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.btn-logout {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.btn-login:active,
+.btn-logout:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 960px) {
+  .navbar .nav-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .logo {
+    width: 100%;
+    text-align: center;
+  }
+
+  .menu,
+  .auth {
+    justify-content: center;
+  }
+}
