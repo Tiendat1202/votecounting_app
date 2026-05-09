@@ -8,3 +8,6 @@
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
   ➜  press h + enter to show help
+5:00:58 AM [vite] (client) hmr update /src/pages/admin/UploadVotes.tsx
+5:00:58 AM [vite] (client) hmr update /src/pages/admin/Sessions.tsx
+5:00:58 AM [vite] (client) hmr update /src/context/AuthContext.tsx, /src/pages/Register.tsx, /src/pages/Results.tsx, /src/pages/admin/Sessions.tsx, /src/pages/admin/Users.tsx, /src/pages/admin/UploadVotes.tsx, /src/pages/admin/SessionDetail.tsx, /src/pages/admin/CreateSession.tsx, /src/pages/admin/Dashboard.tsx
